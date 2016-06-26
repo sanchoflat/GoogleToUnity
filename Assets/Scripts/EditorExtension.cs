@@ -15,6 +15,12 @@ namespace EternalMaze.EditorWindows {
         private readonly Dictionary<string, string> _enumPopup = new Dictionary<string, string>();
 
 
+
+        public bool Toggle(string label, bool value) {
+            value = EditorGUILayout.Toggle(new GUIContent(label), value); GUI.color = Color.white;
+            return value;
+        }
+
         /// <summary>
         /// 
         /// </summary>

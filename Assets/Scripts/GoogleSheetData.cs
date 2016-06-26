@@ -11,29 +11,31 @@ namespace G2U {
         private const string GoogleDriveFormat =
             "http://docs.google.com/feeds/download/spreadsheets/Export?key={0}&exportFormat=csv&gid={1}";
 
-        public GoogleSheetData(SheetType sheetType, string className, string jsonDataLocation, string classLocation,
-            string googleDriveFileGuid, string googleDriveSheetGuid) {
+        public GoogleSheetData(string jsonDataLocation, string classLocation,
+            string googleDriveFileGuid, string googleDriveSheetGuid, bool skipEmptyLines, bool generateClassForEveryColumn)
+        {
             GoogleDriveSheetGuid = googleDriveSheetGuid;
             GoogleDriveFileGuid = googleDriveFileGuid;
-            SheetType = sheetType;
             JSONDataLocation = jsonDataLocation;
             ClassLocation = classLocation;
-            ClassName = className;
+            SkipEmptyLines = skipEmptyLines;
+            GenerateClassForEveryColumn = generateClassForEveryColumn;
         }
 
         public GoogleSheetData() {
             GoogleDriveSheetGuid = "";
             GoogleDriveFileGuid = "";
-            SheetType = SheetType.Config;
-            ClassName = "";
             ClassLocation = "";
             JSONDataLocation = "";
+            SkipEmptyLines = false;
+            GenerateClassForEveryColumn = false;
         }
 
-        public string ClassName { get; set; }
+    
+        public bool GenerateClassForEveryColumn { get; set; }
+        public bool SkipEmptyLines { get; set; }
         public string ClassLocation { get; set; }
         public string JSONDataLocation { get; set; }
-        public SheetType SheetType { get; set; }
         public string GoogleDriveFileGuid { get; set; }
         public string GoogleDriveSheetGuid { get; set; }
 
@@ -42,21 +44,21 @@ namespace G2U {
             return string.Format(GoogleDriveFormat, GoogleDriveFileGuid, GoogleDriveSheetGuid);
         }
 
-        public FileInfo GetClassFileInfo() {
-            return new FileInfo(ClassLocation + "/" + ClassName + ".cs");
+        public FileInfo GetClassDirectory() {
+            return new FileInfo(ClassLocation + "\\");
         }
 
-        public FileInfo GetJSONDataFileInfo() {
-            return new FileInfo(JSONDataLocation + "/" + ClassName + ".txt");
+        public FileInfo GetJSONDataDirectory() {
+            return new FileInfo(JSONDataLocation + "\\");
         }
 
         public static List<GoogleSheetData> CreateDefaultData() {
             return new List<GoogleSheetData>(2) {
-                new GoogleSheetData(SheetType.Config, "GameConfig", PathManager.GetJSONDataPath().DirectoryName,
-                    PathManager.GetClassPath().DirectoryName, "1MAQ6GP3iFQ90vVMaiSxHnQBiVfUKeaklc0W2Lm6H6l0", "0"),
-                new GoogleSheetData(SheetType.Localization, "Localization", PathManager.GetJSONDataPath().DirectoryName,
+                new GoogleSheetData(PathManager.GetJSONDataPath().DirectoryName,
+                    PathManager.GetClassPath().DirectoryName, "1MAQ6GP3iFQ90vVMaiSxHnQBiVfUKeaklc0W2Lm6H6l0", "0", true, true),
+                new GoogleSheetData(PathManager.GetJSONDataPath().DirectoryName,
                     PathManager.GetClassPath().DirectoryName, "1MAQ6GP3iFQ90vVMaiSxHnQBiVfUKeaklc0W2Lm6H6l0",
-                    "991512526")
+                    "991512526", false, false)
             };
         }
     }

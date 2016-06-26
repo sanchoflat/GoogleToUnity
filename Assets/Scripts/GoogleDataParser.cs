@@ -4,21 +4,21 @@ using G2U;
 
 namespace G2U {
     public class GoogleDataParser {
-        public static Dictionary<SheetType, List<Dictionary<string, object>>> ParsedData;
+        public static List<List<Dictionary<string, string>>> ParsedData;
 
-        public static Dictionary<SheetType, List<Dictionary<string, object>>> ParseSheet(List<string> dataFromGoogle, List<GoogleSheetData> googleData)
+        public static List<List<Dictionary<string, string>>> ParseSheet(List<string> dataFromGoogle, List<GoogleSheetData> googleData)
         {
-            ParsedData = new Dictionary<SheetType, List<Dictionary<string, object>>>();
+            ParsedData = new List<List<Dictionary<string, string>>>();
             for (var i = 0; i < dataFromGoogle.Count; i++) {
                 if (dataFromGoogle.Contains("DOCTYPE")) continue;
 
                 var sheetData = ParseSheet(dataFromGoogle[i]);
-                ParsedData.Add(googleData[i].SheetType, sheetData);
+                ParsedData.Add(sheetData);
             }
             return ParsedData;
         }
 
-        public static List<Dictionary<string, object>> ParseSheet(string sheet)
+        public static List<Dictionary<string, string>> ParseSheet(string sheet)
         {
             try {
                 return CSVReader.Read(sheet);

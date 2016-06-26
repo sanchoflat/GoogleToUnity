@@ -21,6 +21,11 @@ using Random = System.Random;
 
 #endregion
 
+namespace System.Runtime.CompilerServices
+{
+    public class ExtensionAttribute : Attribute { }
+}
+
 public static class Extensions {
 
     #region json extension
