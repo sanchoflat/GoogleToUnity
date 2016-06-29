@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using EternalMaze.EditorWindows;
@@ -87,10 +88,15 @@ namespace G2U {
             _ex.Button("Скачать Google Sheets и сохранить в JSON", () => {
                 GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
                     () => {
-                        var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-                            _g2uConfig.GoogleSheetData);
-                        CheckForFolders();
-                        GenerateJSON();
+                        try {
+                            var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
+                                _g2uConfig.GoogleSheetData);
+                            CheckForFolders();
+                            GenerateJSON();
+                        }
+                        catch(Exception e) {
+                            Debug.LogError(e.Message);
+                        }
                     });
             });
         }
@@ -99,10 +105,15 @@ namespace G2U {
             _ex.Button("Скачать Google Sheets и сгенерировать новый класс", () => {
                 GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
                     () => {
-                        var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-                            _g2uConfig.GoogleSheetData);
-                        CheckForFolders();
-                        GenerateClass();
+                        try {
+                            var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
+                                _g2uConfig.GoogleSheetData);
+                            CheckForFolders();
+                            GenerateClass();
+                        }
+                        catch(Exception e) {
+                            Debug.LogError(e.Message);
+                        }
                     });
             });
         }

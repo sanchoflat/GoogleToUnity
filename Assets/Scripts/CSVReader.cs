@@ -27,7 +27,7 @@ public class CSVReader
 		for(var i=1; i < lines.Length; i++) {
 
 			var values = Regex.Split(lines[i], SPLIT_RE);
-			if(values.Length == 0 ||values[0] == "") continue;
+            if (values.Length == 0 || AllowRow(values)) continue;
 
 			var entry = new Dictionary<string, string>();
 			for(var j=0; j < header.Length && j < values.Length; j++ ) {
@@ -47,4 +47,14 @@ public class CSVReader
 		}
 		return list;
 	}
+
+
+
+    private static bool AllowRow(string[] data) {
+        for(int i = 0; i < data.Length; i++) {
+            if(!string.IsNullOrEmpty(data[i]))
+                return false;
+        }
+        return true;
+    }
 }

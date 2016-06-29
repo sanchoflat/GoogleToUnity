@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using Debug = UnityEngine.Debug;
 
 
 namespace G2U {
@@ -48,31 +50,24 @@ namespace G2U {
             List<Dictionary<string, string>> data) {
             var keys = GetKeys(data);
             var dictionaryData = new Dictionary<string, List<string>>();
-
-            for (int i = 0; i < keys.Count; i++) {
+            for(var i = 0; i < keys.Count; i++) {
                 dictionaryData.Add(keys[i], new List<string>());
             }
-
-            foreach (var d in data) {
-                foreach (var key in keys) {
+            foreach(var d in data) {
+                foreach(var key in keys) {
                     dictionaryData[key].Add(d[key]);
                 }
-
             }
             return dictionaryData;
         }
 
         private List<string> GetKeys(List<Dictionary<string, string>> data) {
             var _keys = new List<string>();
-
-            foreach (var key in data[0].Keys) {
+            foreach(var key in data[0].Keys) {
                 _keys.Add(key);
             }
-
             return _keys;
         }
-
-
 
         protected virtual string GetFileStart() {
             return "";
@@ -162,27 +157,76 @@ namespace G2U {
             return output;
         }
 
-
         private string GenerateJsonFile(List<string> keyList, List<string> valueList) {
-            StringBuilder sb = new StringBuilder();
+            var sb = new StringBuilder();
+            var createArray = false;
             sb.Append(GetFileStart());
-            for (int i = 0; i < keyList.Count; i++) {
-                var value = valueList[i];
-                if (SkipRow(GetKey(keyList[i])) || (string.IsNullOrEmpty(value) && _googleData.SkipEmptyLines))
+            for(var i = 0; i < keyList.Count; i++) {
+                var key = GetKey(keyList[i]);
+                var value = GetValue(valueList[i]);
+                var line = new StringBuilder();
+                if(SkipRow(key) || (string.IsNullOrEmpty(value) && _googleData.SkipEmptyLines)) {
                     continue;
-              
-                if (sb.Length > 1)
-                    sb.Append(",");
-                sb.Append(GetKey(keyList[i]));
-                sb.Append(GetValue(value));
+                }
+                if(i < keyList.Count - 1) {
+                    var nextKey = keyList[i + 1];
+                    if(string.IsNullOrEmpty(nextKey)) {
+                        createArray = true;
+                    }
+                }
+
+                line.Append(key + ": ");
+
+                if(createArray) {
+                    line = CreateArrayLine(line, value, keyList, valueList, ref i);
+                    sb.Append(line);
+                    createArray = false;
+                    continue;
+                }
+
+                line.Append(value);
+                if(AppendCommaAtTheEnd(i, valueList)) {
+                    line.Append(",\n");
+                }
+                sb.Append(line);
             }
-            var txt = sb.ToString();
-            if (txt.EndsWith(",")) {
-                txt = txt.TrimEnd(',');
-            }
-            txt += GetFileEnd();
-            return txt;
+            sb.Append(GetFileEnd());
+            return sb.ToString();
         }
+
+
+        private bool AppendCommaAtTheEnd(int i, List<string> data) {
+            return i < (data.Count - 1);
+        }
+
+        private StringBuilder CreateArrayLine(StringBuilder line, string value, List<string> keyList,
+            List<string> valueList, ref int i) {
+            line.Append("[");
+            while(true) {
+              
+                line.Append(value);
+                i += 1;
+                if(i == valueList.Count) {
+                    line.Append("]");
+                    return line;
+                }
+                value = GetValue(valueList[i]);
+                var keyFromList = keyList[i];
+                if(string.IsNullOrEmpty(keyFromList)) {
+                    line.Append(", ");
+                }
+                else {
+                    line.Append("]");
+                    if(AppendCommaAtTheEnd(i, valueList)) {
+                        line.Append(",");
+                    }
+                    line.Append("\n");
+                    return line;
+                }
+            }
+        }
+
+       
 
         protected override string GetFileStart() {
             return "{";
@@ -199,7 +243,7 @@ namespace G2U {
         }
 
         private string GetKey(string key) {
-            return "\"" + key + "\": ";
+            return "\"" + key + "\"";
         }
 
         private string GetValue(string value) {
@@ -272,16 +316,39 @@ namespace G2U {
         }
 
 
-        private string GenerateClassFile(List<string> dataType, List<string> values, List<string> comments) {
+        private string GenerateClassFile(List<string> keys, List<string> values, List<string> comments) {
             var sb = new StringBuilder();
             sb.AppendLine(GetFileStart());
-            for (var i = 0; i < dataType.Count; i++) {
-                if (SkipRow(dataType[i])) continue;
+            for (var i = 0; i < keys.Count; i++) {
+                if (SkipRow(keys[i])) continue;
                 var comment = GetComment(comments, i);
                 if (!string.IsNullOrEmpty(comment)) {
                     sb.Append(GetCommentData(comment, GetTabulator(2)));
                 }
-                sb.AppendLine(GetTabulator(2) + GetProperty(dataType[i], values[i]));
+
+
+                var keyTmp = keys[i];
+                var valueTmp = values[i];
+                if(i < keys.Count - 1) {
+                    var nextKey = keys[i + 1];
+                    var nextValue = values[i + 1];
+                    if ((!string.IsNullOrEmpty(nextKey) && !string.IsNullOrEmpty(nextValue)) || SkipRow(nextKey))
+                    {
+                        sb.AppendLine(GetTabulator(2) + GetProperty(keys[i], values[i], false));
+                        continue;
+                    }
+                    while(true) {
+                        i += 1;
+                        if(i < keys.Count - 1) {
+                            nextKey = keys[i + 1];
+                            if(!string.IsNullOrEmpty(nextKey)) {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                sb.AppendLine(GetTabulator(2) + GetProperty(keyTmp, valueTmp, true));
             }
             sb.AppendLine(GetLoadMethod(_className));
             sb.Append(GetFileEnd());
@@ -313,10 +380,10 @@ namespace G2U {
         }
 
 
-        protected string GetProperty(string name, string value) {
+        protected string GetProperty(string name, string value, bool array) {
             var sb = new StringBuilder();
             sb.Append("public ");
-            sb.Append(GetPropertyType(value) + " ");
+            sb.Append(GetPropertyType(value) + (array ? "[] " : " "));
             sb.Append(name);
             sb.Append(" { get; private set; }");
             sb.AppendLine("");
