@@ -1,10 +1,13 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using EternalMaze.EditorWindows;
+
 using UnityEditor;
+
 using UnityEngine;
 
 namespace G2U {
@@ -48,9 +51,8 @@ namespace G2U {
                 _g2uConfig = LoadSaveManager.LoadConfig();
                 if(_g2uConfig == null) return false;
             }
-            if(_g2uConfig.WasInizialized)
-                CheckForFolders();
-            return _g2uConfig.WasInizialized;
+            CheckForFolders();
+            return true;
         }
 
         /// <summary>
@@ -59,10 +61,9 @@ namespace G2U {
         private void Inizialize() {
             if(_g2uConfig == null)
                 _g2uConfig = G2UConfig.CreateDefaultConfig();
-            _g2uConfig.WasInizialized = true;
             PathManager.CreateClassFolder(_g2uConfig);
             PathManager.CreateJSONDataFolder(_g2uConfig);
-            PathManager.CreateConfigFolder();
+            PathManager.CreateG2USavesFolder();
             LoadSaveManager.SaveConfig(_g2uConfig);
         }
 
@@ -352,3 +353,4 @@ namespace G2U {
         }
     }
 }
+#endif

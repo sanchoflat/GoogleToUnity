@@ -47,7 +47,7 @@ namespace G2U {
         }
 
 
-        public static void CreateConfigFolder() {
+        public static void CreateG2USavesFolder() {
             if (!Directory.Exists(_configFolderDefault)) {
                 Directory.CreateDirectory(_configFolderDefault);
             }
