@@ -1,65 +1,105 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
-using Debug = UnityEngine.Debug;
 
 
 namespace G2U {
-    public class AbstractFileBuilder {
+    public abstract class AbstractFileBuilder {
         protected const string COMMENT_KEY = "Comment";
-
 
         protected G2UConfig _config;
         protected GoogleSheetData _googleData;
 
-        public AbstractFileBuilder(G2UConfig config, int counter) {
+        protected AbstractFileBuilder(G2UConfig config, int counter) {
             _config = config;
             _googleData = _config.GoogleSheetData[counter];
-
         }
 
-        public static AbstractFileBuilder GetClassBuilder(G2UConfig config, int counter)
-        {
+        public static AbstractFileBuilder GetClassBuilder(G2UConfig config, int counter) {
             return new ClassBuilder(config, counter);
         }
 
-        public static AbstractFileBuilder GetJsonBuilder(G2UConfig config, int counter)
-        {
+        public static AbstractFileBuilder GetJsonBuilder(G2UConfig config, int counter) {
             return new JsonBuilder(config, counter);
         }
 
-        public virtual string GetEmptyFile() {
-            return "";
-        }
+        public abstract string GetEmptyFile();
+        protected abstract string GenerateFile(List<AbstractDataRow> data);
 
+        
         public Dictionary<string, string> GenerateFiles(List<Dictionary<string, string>> data) {
             var _parsedFileData = PrepareParsedFileData(data);
-            return GenerateFiles(_parsedFileData);
+            var className = data[0].ElementAt(0).Key;
+            return GenerateFiles(_parsedFileData, className);
         }
 
-        protected virtual Dictionary<string, string> GenerateFiles(
-            Dictionary<string, List<string>> data) {
-            return null;
-        }
+        protected abstract Dictionary<string, string> GenerateFiles(
+            Dictionary<string, List<AbstractDataRow>> data, string className);
 
+    
 
-        protected virtual Dictionary<string, List<string>> PrepareParsedFileData(
+        protected Dictionary<string, List<AbstractDataRow>> PrepareParsedFileData(
             List<Dictionary<string, string>> data) {
+
             var keys = GetKeys(data);
-            var dictionaryData = new Dictionary<string, List<string>>();
-            for(var i = 0; i < keys.Count; i++) {
-                dictionaryData.Add(keys[i], new List<string>());
+            var dictionaryData = new Dictionary<string, List<AbstractDataRow>>();
+            for(var i = 1; i < keys.Count; i++) {
+                if (SkipColumn(keys[i])) { continue; }
+                dictionaryData.Add(keys[i], new List<AbstractDataRow>());
             }
-            foreach(var d in data) {
-                foreach(var key in keys) {
-                    dictionaryData[key].Add(d[key]);
+            bool addArrayValue = false;
+
+            for(var j = 1; j < keys.Count; j++) {
+                for(var i = 0; i < data.Count; i++) {
+                    var comment = "";
+                    data[i].TryGetValue(COMMENT_KEY, out comment);
+
+                    var d = data[i];
+                    var key = keys[j];
+                    var rowName = data[i][keys[0]];
+
+
+                    if (SkipRow(rowName)) { continue; }
+                    if(SkipColumn(keys[j])) { continue; }
+                    if(string.IsNullOrEmpty(data[i][keys[j]]))
+                        continue;
+
+                    var dataList = new List<string>();
+
+                    if(i < data.Count - 1) {
+                        while(true) {
+                            dataList.Add(data[i][key]);
+                            var nextData = data[i + 1];
+                            if(string.IsNullOrEmpty(nextData[keys[0]]) && !string.IsNullOrEmpty(nextData[key])) {
+                                addArrayValue = true;
+                                i += 1;
+                                if(i == data.Count - 1) {
+                                    dataList.Add(data[i][key]);
+                                    break;
+                                }
+                            }
+                            else {
+                                if(addArrayValue) {
+                                    addArrayValue = false;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    else {
+                        dataList.Add(data[i][key]);
+                    }
+                    var dataRow = GetRowData(rowName, dataList.ToArray(), comment);
+                    dictionaryData[key].Add(dataRow);
                 }
             }
             return dictionaryData;
         }
+
+        protected abstract AbstractDataRow GetRowData(string parameterName, string[] data, string comment);
 
         private List<string> GetKeys(List<Dictionary<string, string>> data) {
             var _keys = new List<string>();
@@ -81,149 +121,65 @@ namespace G2U {
             return "";
         }
 
-        protected string GetTabulator(int count) {
-            var sb = new StringBuilder(count);
-            for (var i = 0; i < count; i++) {
-                sb.Append("\t");
-            }
-            return sb.ToString();
+        private string GetClassName() {
+            return "";
         }
 
-        protected bool SkipColumn(string columnName, int columnNumber) {
-            return columnName.Equals(COMMENT_KEY) || columnNumber == 0;
+        protected bool SkipColumn(string columnName) {
+            return columnName.Equals(COMMENT_KEY);
         }
         protected bool SkipRow(string rowName)
         {
             return rowName.Contains(_config.SkipRowPrefix);
         }
-        #region Get Property type
 
-        protected string GetPropertyType(string data) {
-            var str = data;
-            if (CheckForBool(str)) {
-                return "bool";
+        public static string GetTabulator(int count)
+        {
+            var sb = new StringBuilder(count);
+            for (var i = 0; i < count; i++)
+            {
+                sb.Append("\t");
             }
-            if (CheckForFloat(str)) {
-                return "float";
-            }
-            if (CheckForInt(str)) {
-                return "int";
-            }
-            return "string";
+            return sb.ToString();
         }
-
-        private bool CheckForBool(string str) {
-            return str.Equals("true", StringComparison.OrdinalIgnoreCase) ||
-                   str.Equals("false", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private bool CheckForFloat(string str) {
-            if (str.Contains(".") || str.Contains(",")) {
-                float value;
-                if (float.TryParse(str, NumberStyles.Float, new NumberFormatInfo(), out value)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private bool CheckForInt(string str) {
-            int value;
-            if (int.TryParse(str, NumberStyles.Integer, new NumberFormatInfo(), out value)) {
-                return true;
-            }
-            return false;
-        }
-
-        #endregion
+     
+     
     }
 
-
     public class JsonBuilder : AbstractFileBuilder {
-        public JsonBuilder(G2UConfig config, int counter) : base(config, counter) { }
+        public JsonBuilder(G2UConfig config, int counter) : base(config, counter) {}
 
         public override string GetEmptyFile() {
             return "{}";
         }
 
-        protected override Dictionary<string, string> GenerateFiles(Dictionary<string, List<string>> data) {
-            Dictionary<string, string> output = new Dictionary<string, string>();
-            var firstKey = data.Keys.ElementAt(0);
-            for (int i = 1; i < data.Count; i++) {
-                var fileKey = data.Keys.ElementAt(i);
-                if (SkipColumn(fileKey, i)) continue;
-                output.Add(fileKey, GenerateJsonFile(data[firstKey], data[fileKey]));
+        protected override AbstractDataRow GetRowData(string parameterName, string[] data, string comment) {
+            return new JSONDataRow(parameterName, data, comment);
+        }
+
+        protected override Dictionary<string, string> GenerateFiles(
+       Dictionary<string, List<AbstractDataRow>> data, string className)
+        {
+            var output = new Dictionary<string, string>();
+            foreach (var keyPair in data)
+            {
+                output.Add(keyPair.Key, GenerateFile(keyPair.Value));
             }
             return output;
         }
 
-        private string GenerateJsonFile(List<string> keyList, List<string> valueList) {
+
+        protected override string GenerateFile(List<AbstractDataRow> data) {
             var sb = new StringBuilder();
-            var createArray = false;
             sb.Append(GetFileStart());
-            for(var i = 0; i < keyList.Count; i++) {
-                var key = GetKey(keyList[i]);
-                var value = GetValue(valueList[i]);
-                var line = new StringBuilder();
-                if(SkipRow(key) || (string.IsNullOrEmpty(value) && _googleData.SkipEmptyLines)) {
-                    continue;
+            for(var i = 0; i < data.Count; i++) {
+                sb.Append(data[i].GetRowString());
+                if(i < data.Count - 1) {
+                    sb.Append(",\n");
                 }
-                if(i < keyList.Count - 1) {
-                    var nextKey = keyList[i + 1];
-                    if(string.IsNullOrEmpty(nextKey)) {
-                        createArray = true;
-                    }
-                }
-
-                line.Append(key + ": ");
-
-                if(createArray) {
-                    line = CreateArrayLine(line, value, keyList, valueList, ref i);
-                    sb.Append(line);
-                    createArray = false;
-                    continue;
-                }
-
-                line.Append(value);
-                if(AppendCommaAtTheEnd(i, valueList)) {
-                    line.Append(",\n");
-                }
-                sb.Append(line);
             }
             sb.Append(GetFileEnd());
             return sb.ToString();
-        }
-
-
-        private bool AppendCommaAtTheEnd(int i, List<string> data) {
-            return i < (data.Count - 1);
-        }
-
-        private StringBuilder CreateArrayLine(StringBuilder line, string value, List<string> keyList,
-            List<string> valueList, ref int i) {
-            line.Append("[");
-            while(true) {
-              
-                line.Append(value);
-                i += 1;
-                if(i == valueList.Count) {
-                    line.Append("]");
-                    return line;
-                }
-                value = GetValue(valueList[i]);
-                var keyFromList = keyList[i];
-                if(string.IsNullOrEmpty(keyFromList)) {
-                    line.Append(", ");
-                }
-                else {
-                    line.Append("]");
-                    if(AppendCommaAtTheEnd(i, valueList)) {
-                        line.Append(",");
-                    }
-                    line.Append("\n");
-                    return line;
-                }
-            }
         }
 
        
@@ -232,32 +188,8 @@ namespace G2U {
             return "{";
         }
 
-        protected override string GetFileData(List<Dictionary<string, string>> data) {
-            var sb = new StringBuilder();
-
-            return sb.ToString();
-        }
-
         protected override string GetFileEnd() {
             return "}";
-        }
-
-        private string GetKey(string key) {
-            return "\"" + key + "\"";
-        }
-
-        private string GetValue(string value) {
-//            value = value.TrimEnd(' ');
-            var objectType = GetPropertyType(value);
-            var data = value;
-            var val = value.Trim(' ');
-            if (objectType == "string") {
-                data = "\"" + value + "\"";
-            }
-            if (objectType == "bool") {
-                data = value.ToLower();
-            }
-            return data;
         }
     }
 
@@ -265,23 +197,40 @@ namespace G2U {
         private string _className;
 
         public ClassBuilder(G2UConfig config, int counter)
-            : base(config, counter)
-        {
+            : base(config, counter) {}
+
+        protected override AbstractDataRow GetRowData(string parameterName, string[] data, string comment) {
+            return new ClassDataRow(parameterName, data, comment);
         }
 
         public override string GetEmptyFile() {
             return string.Format("namespace {0} {{\n    public class {1} {{}}\n}}", _className, _config.Namespace);
         }
 
+        protected override Dictionary<string, string> GenerateFiles(
+            Dictionary<string, List<AbstractDataRow>> data, string className)
+        {
+            var output = new Dictionary<string, string>();
+            var firstEl = data.ElementAt(0);
+            _className = className;
+            output.Add(_className, GenerateFile(firstEl.Value));
+            return output;
+        }
+
+        protected override string GenerateFile(List<AbstractDataRow> data) {
+            var sb = new StringBuilder();
+            sb.Append(GetFileStart());
+            for(var i = 0; i < data.Count; i++) {
+                sb.Append(data[i].GetRowString());
+            }
+            sb.Append(GetFileEnd());
+            return sb.ToString();
+        }
+
         protected override string GetFileStart() {
             var sb = new StringBuilder();
             sb.AppendLine("using System;");
             sb.AppendLine("using UnityEngine;");
-            //            sb.AppendLine("using System.Collections.Generic;");
-            //            sb.AppendLine("using System.IO;");
-            //            sb.AppendLine("using UnityEditor;");
-            //            sb.AppendLine("using EternalMaze.EditorWindows;");
-
             sb.AppendLine(string.Format("namespace {0} {{", _config.Namespace));
             sb.AppendLine(string.Format("{0}public class {1} {{", GetTabulator(1), _className));
             return sb.ToString();
@@ -294,131 +243,165 @@ namespace G2U {
             return sb.ToString();
         }
 
+    }
 
-        protected override Dictionary<string, string> GenerateFiles(Dictionary<string, List<string>> data) {
-            var output = new Dictionary<string, string>(1);
-            var firstKey = data.Keys.ElementAt(0);
-            var valuesKey = data.Keys.ElementAt(1);
-            if (!_googleData.GenerateClassForEveryColumn) {
-                _className = firstKey;
-                output.Add(firstKey, GenerateClassFile(data[firstKey], data[valuesKey], GetCommentsList(data)));
+    public abstract class AbstractDataRow {
+        public string ParameterName { get; private set; }
+        public string ParameterType { get; private set; }
+        public string[] Data { get; private set; }
+        public bool IsArray { get; private set; }
+        public string Comment { get; private set; }
+
+        public AbstractDataRow(string parameterName, string[] data, string comment) {
+            ParameterName = parameterName;
+            Data = data;
+            if(data.Length > 0) {
+                ParameterType = GetDataType(Data[0]);
             }
             else {
-                for (var i = 1; i < data.Count; i++) {
-                    valuesKey = data.Keys.ElementAt(i);
-                    if(SkipColumn(valuesKey, i)) continue;
-                    _className = valuesKey;
-                    output.Add(_className, GenerateClassFile(data[firstKey], data[valuesKey], GetCommentsList(data)));
+                ParameterType = "string";
+            }
+            IsArray = data.Length > 1;
+            Comment = comment;
+        }
+
+        public abstract string GetRowString();
+
+        protected string GetDataType(string data) {
+            return GetPropertyType(data);
+        }
+
+       
+
+        #region Get Property type
+
+        protected string GetPropertyType(string data) {
+            var str = data;
+            if(CheckForBool(str)) {
+                return "bool";
+            }
+            if(CheckForFloat(str)) {
+                return "float";
+            }
+            if(CheckForInt(str)) {
+                return "int";
+            }
+            return "string";
+        }
+
+        private bool CheckForBool(string str) {
+            return str.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+                   str.Equals("false", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool CheckForFloat(string str) {
+            if(str.Contains(".") || str.Contains(",")) {
+                float value;
+                if(float.TryParse(str, NumberStyles.Float, new NumberFormatInfo(), out value)) {
+                    return true;
                 }
             }
+            return false;
+        }
 
-            return output;
+        private bool CheckForInt(string str) {
+            int value;
+            if(int.TryParse(str, NumberStyles.Integer, new NumberFormatInfo(), out value)) {
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
+    }
+
+    public class JSONDataRow : AbstractDataRow {
+        public JSONDataRow(string parameterName, string[] data, string comment) : base(parameterName, data, comment) {}
+      
+        public override string GetRowString() {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("\"");
+            sb.Append(ParameterName);
+            sb.Append("\": ");
+            sb.Append(GetValueFormat());
+
+            return sb.ToString();
+        }
+
+        private string GetValueFormat() {
+            var sb = new StringBuilder();
+            if(IsArray) {
+                sb.Append("[");
+            }
+            for(var i = 0; i < Data.Length; i++) {
+                sb.Append(GetValueFormat(Data[i], ParameterType));
+                if(i != Data.Length - 1) {
+                    sb.Append(", ");
+                }
+            }
+            if(IsArray) {
+                sb.Append("]");
+            }
+            return sb.ToString();
+        }
+
+        private string GetValueFormat(string value, string type) {
+            switch(type) {
+                case "bool":
+                    return value.ToLower();
+                case "string":
+                    return "\"" + value + "\"";
+            }
+            return value;
         }
 
 
-        private string GenerateClassFile(List<string> keys, List<string> values, List<string> comments) {
-            var sb = new StringBuilder();
-            sb.AppendLine(GetFileStart());
-            for (var i = 0; i < keys.Count; i++) {
-                if (SkipRow(keys[i])) continue;
-                var comment = GetComment(comments, i);
-                if (!string.IsNullOrEmpty(comment)) {
-                    sb.Append(GetCommentData(comment, GetTabulator(2)));
-                }
 
 
-                var keyTmp = keys[i];
-                var valueTmp = values[i];
-                if(i < keys.Count - 1) {
-                    var nextKey = keys[i + 1];
-                    var nextValue = values[i + 1];
-                    if ((!string.IsNullOrEmpty(nextKey) && !string.IsNullOrEmpty(nextValue)) || SkipRow(nextKey))
-                    {
-                        sb.AppendLine(GetTabulator(2) + GetProperty(keys[i], values[i], false));
-                        continue;
-                    }
-                    while(true) {
-                        i += 1;
-                        if(i < keys.Count - 1) {
-                            nextKey = keys[i + 1];
-                            if(!string.IsNullOrEmpty(nextKey)) {
-                                break;
-                            }
-                        }
-                    }
-                }
+    }
+    
+    public class ClassDataRow : AbstractDataRow {
+        public ClassDataRow(string parameterName, string[] data, string comment) : base(parameterName, data, comment) {}
 
-                sb.AppendLine(GetTabulator(2) + GetProperty(keyTmp, valueTmp, true));
-            }
-            sb.AppendLine(GetLoadMethod(_className));
-            sb.Append(GetFileEnd());
+        public override string GetRowString()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Append(GetCommentData(Comment, AbstractFileBuilder.GetTabulator(2)));
+            sb.Append(AbstractFileBuilder.GetTabulator(2));
+            sb.Append("public ");
+            sb.Append(ParameterType + (IsArray ? "[]": ""));
+            sb.Append(" ");
+            sb.Append(ParameterName);
+            sb.Append(" {get; private set;}\n");
             return sb.ToString();
         }
 
 
-        private List<string> GetCommentsList(Dictionary<string, List<string>> data) {
-            List<string> comments = null;
-            var isCommentsAvaliable = data.Keys.Contains(COMMENT_KEY);
-            if (isCommentsAvaliable) {
-                comments = data[COMMENT_KEY];
-            }
-            return comments;
-        }
-
-        private string GetComment(List<string> comments, int count) {
-            if (comments == null) return "";
-            return comments[count];
-        }
-
-
         private string GetCommentData(string data, string tabulator) {
+            if(string.IsNullOrEmpty(data)) return "";
             var sb = new StringBuilder();
-            sb.AppendLine(tabulator + "/// <summary>");
+            sb.AppendLine("\n" + tabulator + "/// <summary>");
             sb.AppendLine(tabulator + "/// " + data);
             sb.AppendLine(tabulator + "/// </summary>");
             return sb.ToString();
         }
 
 
-        protected string GetProperty(string name, string value, bool array) {
+        protected string GetProperty(string name, string value, bool array)
+        {
             var sb = new StringBuilder();
             sb.Append("public ");
-            sb.Append(GetPropertyType(value) + (array ? "[] " : " "));
+            //            sb.Append(GetPropertyType(value) + (array ? "[] " : " "));
             sb.Append(name);
             sb.Append(" { get; private set; }");
             sb.AppendLine("");
             return sb.ToString();
         }
 
-
-        private string GetLoadMethod(string fileName) {
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine(string.Format("{0}public {1} Load(string fileName) {{", GetTabulator(2), _className));
-            sb.AppendLine(string.Format("{0}var dataType = Resources.Load(\"{1}\" + fileName) as TextAsset;", GetTabulator(3), GetResourcesPath()));
-            sb.AppendLine(string.Format("{0}var d = new {1}();", GetTabulator(3), _className));
-            sb.AppendLine(string.Format("{0}if(dataType == null || string.IsNullOrEmpty(dataType.text)) return null;", GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}d = d.LoadJSONFromString(dataType.text);", GetTabulator(3)));
-            sb.AppendLine(GetTabulator(3) + "return d;");
-            sb.AppendLine(GetTabulator(2) + "}");
-            return sb.ToString();
-        }
-
-
-        private string GetResourcesPath() {
-            var splittedPath = _googleData.JSONDataLocation.Split('\\');
-            StringBuilder path = new StringBuilder();
-            for (int i = 0; i < splittedPath.Length; i++)
-            {
-                if (splittedPath[i].Equals("Resources")) {
-                    
-                    for (int j = i; j < splittedPath.Length; j++) {
-                        path.Append(splittedPath[j]);
-                        path.Append("\\\\");
-                    }
-                    return path.ToString();
-                }
-            }
-            return "";
-        }
     }
+
+
+
+
+
 }

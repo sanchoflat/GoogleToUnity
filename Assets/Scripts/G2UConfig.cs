@@ -5,6 +5,8 @@ namespace G2U {
         public List<GoogleSheetData> GoogleSheetData;
         public string Namespace;
         public string SkipRowPrefix;
+        public string ParameterClassName;
+        public string ParameterClassLocation;
         public bool WasInizialized;
 
 
@@ -13,7 +15,10 @@ namespace G2U {
                 Namespace = "EternalMaze.Configs",
                 WasInizialized = true,
                 GoogleSheetData = G2U.GoogleSheetData.CreateDefaultData(),
-                SkipRowPrefix = "__"
+                SkipRowPrefix = "__",
+                ParameterClassName = "CellType",
+                ParameterClassLocation = PathManager.GetCellTypeDataPath().DirectoryName
+
             };
         }
     }

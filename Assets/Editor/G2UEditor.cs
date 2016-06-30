@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using EternalMaze.EditorWindows;
 using UnityEditor;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace G2U {
         [MenuItem("LoadGoogle/Load")]
         public static void Init() {
             // Get existing open window or if none, make a new one:
-            var window = (G2UEditor) GetWindow(typeof (G2UEditor));
+            var window = (G2UEditor) GetWindow(typeof(G2UEditor));
             window.Show();
             _g2uConfig = null;
         }
@@ -28,7 +29,7 @@ namespace G2U {
 
         private void MenuDrawer() {
             _ex.DrawVertical(() => {
-                if (CheckInitialization()) {
+                if(CheckInitialization()) {
                     WorkMenu();
                 }
                 else {
@@ -43,11 +44,11 @@ namespace G2U {
         ///     Шаг 1. Загрузить конфиг и проверить его
         /// </summary>
         private bool CheckInitialization() {
-            if (_g2uConfig == null) {
+            if(_g2uConfig == null) {
                 _g2uConfig = LoadSaveManager.LoadConfig();
-                if (_g2uConfig == null) return false;
+                if(_g2uConfig == null) return false;
             }
-            if (_g2uConfig.WasInizialized)
+            if(_g2uConfig.WasInizialized)
                 CheckForFolders();
             return _g2uConfig.WasInizialized;
         }
@@ -56,7 +57,7 @@ namespace G2U {
         ///     Шаг 2. Необходимо инициализировать конфиг.
         /// </summary>
         private void Inizialize() {
-            if (_g2uConfig == null)
+            if(_g2uConfig == null)
                 _g2uConfig = G2UConfig.CreateDefaultConfig();
             _g2uConfig.WasInizialized = true;
             PathManager.CreateClassFolder(_g2uConfig);
@@ -119,20 +120,22 @@ namespace G2U {
         }
 
         private void LoadDataGenerateClassAndSaveToJson() {
-            _ex.Button("Скачать Google Sheets, сгенерировать новый класс и сохранить данные в JSON", () => {
-                GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
-                    () => {
-                        var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-                            _g2uConfig.GoogleSheetData);
-                        CheckForFolders();
-                    });
-            });
+//            _ex.Button("Скачать Google Sheets, сгенерировать новый класс и сохранить данные в JSON", () => {
+//                GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
+//                    () => {
+//                        var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
+//                            _g2uConfig.GoogleSheetData);
+//                        CheckForFolders();
+//                    });
+//            });
         }
+
+
 
         #region Dopolnitelno
 
         private void ShowGoogleDataItem() {
-            if (_ex.Foldout("Дополнительно", "qwerty", true)) {
+            if(_ex.Foldout("Дополнительно", "qwerty", true)) {
                 DrawOptionsButton();
                 ShowGoogleSheetDataControl();
                 DrawGoogleSheetDataList();
@@ -154,10 +157,13 @@ namespace G2U {
         }
 
         private void DrawGoogleSheetDataList() {
-            if (_ex.Foldout("Google Sheet Data", "GoogleSheetDataFoldout", true)) {
-                _g2uConfig.Namespace = _ex.TextField("Namespace", _g2uConfig.Namespace);
-                _g2uConfig.SkipRowPrefix = _ex.TextField("Skip prefix", _g2uConfig.SkipRowPrefix);
-                foreach (var googleSheetData in _g2uConfig.GoogleSheetData) {
+            _g2uConfig.Namespace = _ex.TextField("Namespace", _g2uConfig.Namespace);
+            _g2uConfig.SkipRowPrefix = _ex.TextField("Skip prefix", _g2uConfig.SkipRowPrefix);
+            _g2uConfig.ParameterClassName = _ex.TextField("Parameter class name", _g2uConfig.ParameterClassName);
+            _g2uConfig.ParameterClassLocation = _ex.TextField("Parameter class location", _g2uConfig.ParameterClassLocation);
+            if(_ex.Foldout("Google Sheet Data", "GoogleSheetDataFoldout", true)) {
+             
+                foreach(var googleSheetData in _g2uConfig.GoogleSheetData) {
                     DrawGoogleSheetData(googleSheetData);
                 }
             }
@@ -168,7 +174,7 @@ namespace G2U {
         }
 
         private void RemoveGoogleSheetData() {
-            if (_g2uConfig.GoogleSheetData.Any()) {
+            if(_g2uConfig.GoogleSheetData.Any()) {
                 _g2uConfig.GoogleSheetData.RemoveAt(_g2uConfig.GoogleSheetData.Count - 1);
             }
         }
@@ -180,7 +186,7 @@ namespace G2U {
                 data.GoogleDriveFileGuid = _ex.TextField("GoogleDriveFileGuid", data.GoogleDriveFileGuid);
                 data.GoogleDriveSheetGuid = _ex.TextField("GoogleDriveSheetGuid", data.GoogleDriveSheetGuid);
                 data.SkipEmptyLines = _ex.Toggle("SkipEmptyLines", data.SkipEmptyLines);
-                data.GenerateClassForEveryColumn = _ex.Toggle("GenerateClassForEveryColumn", data.GenerateClassForEveryColumn);
+             
             }, bgColor: GetGoogleDataGUIColor(), border: true);
         }
 
@@ -218,7 +224,7 @@ namespace G2U {
         #region Generation
 
         private void GenerateAndSaveEmptyClass(List<GoogleSheetData> googleData) {
-            foreach (var googleSheetData in _g2uConfig.GoogleSheetData) {
+            foreach(var googleSheetData in _g2uConfig.GoogleSheetData) {
                 var @class = GenerateEmptyClass(googleSheetData);
                 LoadSaveManager.SaveClass(@class, googleSheetData.GetClassDirectory().FullName);
             }
@@ -232,22 +238,29 @@ namespace G2U {
         }
 
         private void GenerateJSON() {
-            for (var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
+            List<string> jsonFiles = new List<string>();
+            for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
                 var generator = AbstractFileBuilder.GetJsonBuilder(_g2uConfig, i);
-                if (generator == null) {
+                if(generator == null) {
                     Debug.Log("Нельзя сгенерировать файл");
                     continue;
                 }
                 var @json = generator.GenerateFiles(GoogleDataParser.ParsedData[i]);
                 LoadSaveManager.SaveJSON(@json, _g2uConfig.GoogleSheetData[i].GetJSONDataDirectory());
+
+                foreach(var j in json) {
+                    jsonFiles.Add(j.Key);
+                }
+                
             }
+            GenerateParameterClassForPath(jsonFiles, _g2uConfig.GoogleSheetData[0].GetJSONDataDirectory());
             Debug.Log("JSON успешно сгенерирован");
         }
 
         private void GenerateClass() {
-            for (var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
+            for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
                 var generator = AbstractFileBuilder.GetClassBuilder(_g2uConfig, i);
-                if (generator == null) {
+                if(generator == null) {
                     Debug.Log("Нельзя сгенерировать файл");
                     continue;
                 }
@@ -257,7 +270,29 @@ namespace G2U {
             Debug.Log("Классы успешно сгенерированы");
         }
 
-        #endregion
+
+        private void GenerateParameterClassForPath(List<string> @json, FileInfo fileInfo)
+        {
+            PathManager.CreateCellTypeFolder(_g2uConfig);
+            StringBuilder file = new StringBuilder();
+            file.AppendLine(string.Format("namespace {0} {{", _g2uConfig.Namespace));
+            file.AppendLine(String.Format("{0}internal class {1} {{", AbstractFileBuilder.GetTabulator(1), _g2uConfig.ParameterClassName));
+
+            foreach (var d in @json)
+            {
+                var path = new FileInfo(Path.Combine(fileInfo.FullName, d));
+                var resourcesPath = PathManager.GetResourcesPath(path).Replace("\\", "\\\\");
+
+                file.Append(String.Format("{0}public const string {1}Path = \"{2}\";\n", AbstractFileBuilder.GetTabulator(2), d, resourcesPath));
+            }
+            file.Append(String.Format("{0}}}\n{1}}}", AbstractFileBuilder.GetTabulator(1), AbstractFileBuilder.GetTabulator(0)));
+            LoadSaveManager.SaveCellType(file.ToString(), PathManager.GetCellTypeDataPath(_g2uConfig, _g2uConfig.ParameterClassName).FullName);
+        }
+
+
+     
+
+    #endregion
 
         #region Color control
 
@@ -307,6 +342,15 @@ namespace G2U {
                     SaveJSON(p, @d.Value);
                 }
             }
+
+            public static void SaveCellType(string file, string path)
+            {
+
+
+                SaveJSON(path, file);
+                
+            }
+
             public static void SaveJSON(string path, string @json)
             {
                 File.WriteAllText(path, @json);

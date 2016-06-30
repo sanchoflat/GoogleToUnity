@@ -12,14 +12,13 @@ namespace G2U {
             "http://docs.google.com/feeds/download/spreadsheets/Export?key={0}&exportFormat=csv&gid={1}";
 
         public GoogleSheetData(string jsonDataLocation, string classLocation,
-            string googleDriveFileGuid, string googleDriveSheetGuid, bool skipEmptyLines, bool generateClassForEveryColumn)
+            string googleDriveFileGuid, string googleDriveSheetGuid, bool skipEmptyLines)
         {
             GoogleDriveSheetGuid = googleDriveSheetGuid;
             GoogleDriveFileGuid = googleDriveFileGuid;
             JSONDataLocation = jsonDataLocation;
             ClassLocation = classLocation;
             SkipEmptyLines = skipEmptyLines;
-            GenerateClassForEveryColumn = generateClassForEveryColumn;
         }
 
         public GoogleSheetData() {
@@ -28,16 +27,15 @@ namespace G2U {
             ClassLocation = "";
             JSONDataLocation = "";
             SkipEmptyLines = false;
-            GenerateClassForEveryColumn = false;
         }
 
     
-        public bool GenerateClassForEveryColumn { get; set; }
         public bool SkipEmptyLines { get; set; }
         public string ClassLocation { get; set; }
         public string JSONDataLocation { get; set; }
         public string GoogleDriveFileGuid { get; set; }
         public string GoogleDriveSheetGuid { get; set; }
+   
 
         public string GetURL() {
             if (string.IsNullOrEmpty(GoogleDriveFileGuid) || string.IsNullOrEmpty(GoogleDriveSheetGuid)) return null;
@@ -55,11 +53,13 @@ namespace G2U {
         public static List<GoogleSheetData> CreateDefaultData() {
             return new List<GoogleSheetData>(2) {
                 new GoogleSheetData(PathManager.GetJSONDataPath().DirectoryName,
-                    PathManager.GetClassPath().DirectoryName, "1MAQ6GP3iFQ90vVMaiSxHnQBiVfUKeaklc0W2Lm6H6l0", "0", true, true),
+                    PathManager.GetClassPath().DirectoryName, "1MAQ6GP3iFQ90vVMaiSxHnQBiVfUKeaklc0W2Lm6H6l0", "0", true),
                 new GoogleSheetData(PathManager.GetJSONDataPath().DirectoryName,
                     PathManager.GetClassPath().DirectoryName, "1MAQ6GP3iFQ90vVMaiSxHnQBiVfUKeaklc0W2Lm6H6l0",
-                    "991512526", false, false)
+                    "991512526", false)
             };
         }
     }
 }
+
+
