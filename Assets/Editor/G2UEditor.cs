@@ -181,6 +181,7 @@ namespace G2U {
 
         private void DrawGoogleSheetData(GoogleSheetData data) {
             _ex.DrawVertical(() => {
+                data.GoogleDataName = _ex.TextField("Sheet Name", data.GoogleDataName);
                 data.ClassLocation = _ex.TextField("Class Location", data.ClassLocation);
                 data.JSONDataLocation = _ex.TextField("JSON Data Location", data.JSONDataLocation);
                 data.GoogleDriveFileGuid = _ex.TextField("GoogleDriveFileGuid", data.GoogleDriveFileGuid);
@@ -228,6 +229,7 @@ namespace G2U {
                 var @class = GenerateEmptyClass(googleSheetData);
                 LoadSaveManager.SaveClass(@class, googleSheetData.GetClassDirectory().FullName);
             }
+            EditorUtility.DisplayDialog("Пустые классы были успешно сгенерированы", "", "Ok");
             Debug.Log("Пустые классы были успешно сгенерированы");
         }
 
@@ -254,7 +256,7 @@ namespace G2U {
                 
             }
             GenerateParameterClassForPath(jsonFiles, _g2uConfig.GoogleSheetData[0].GetJSONDataDirectory());
-            Debug.Log("JSON успешно сгенерирован");
+            EditorUtility.DisplayDialog("", "JSON успешно сгенерирован", "Ok"); 
         }
 
         private void GenerateClass() {
@@ -267,7 +269,7 @@ namespace G2U {
                 var @class = generator.GenerateFiles(GoogleDataParser.ParsedData[i]);
                 LoadSaveManager.SaveClass(@class, _g2uConfig.GoogleSheetData[i].GetClassDirectory());
             }
-            Debug.Log("Классы успешно сгенерированы");
+            EditorUtility.DisplayDialog("", "Классы успешно сгенерированы", "Ok"); 
         }
 
 
@@ -289,10 +291,7 @@ namespace G2U {
             LoadSaveManager.SaveCellType(file.ToString(), PathManager.GetCellTypeDataPath(_g2uConfig, _g2uConfig.ParameterClassName).FullName);
         }
 
-
-     
-
-    #endregion
+        #endregion
 
         #region Color control
 
@@ -300,7 +299,7 @@ namespace G2U {
 
         private Color GetGoogleDataGUIColor() {
             _colorCounter ++;
-            if (_colorCounter%2 == 0) {
+            if(_colorCounter % 2 == 0) {
                 return new Color(.7f, 0, 0, 0.3f);
             }
             return new Color(0, .7f, 0, 0.3f);
@@ -314,8 +313,9 @@ namespace G2U {
         private static class LoadSaveManager {
             public static G2UConfig LoadConfig() {
                 G2UConfig config = null;
-                if (!PathManager.GetConfigPath().Exists)
+                if(!PathManager.GetConfigPath().Exists) {
                     return null;
+                }
                 return config.LoadJSONFromFile(PathManager.GetConfigPath().FullName);
             }
 
@@ -325,34 +325,28 @@ namespace G2U {
             }
 
             public static void SaveClass(Dictionary<string, string> @class, FileInfo path) {
-                foreach (var d in @class) {
+                foreach(var d in @class) {
                     var p = Path.Combine(path.FullName, d.Key + ".cs");
                     SaveClass(p, @d.Value);
                 }
             }
 
-            public static void SaveClass(string path, string @class)
-            {
+            public static void SaveClass(string path, string @class) {
                 File.WriteAllText(path, @class);
             }
 
             public static void SaveJSON(Dictionary<string, string> @json, FileInfo path) {
-                foreach (var d in @json) {
+                foreach(var d in @json) {
                     var p = Path.Combine(path.FullName, d.Key + ".txt");
                     SaveJSON(p, @d.Value);
                 }
             }
 
-            public static void SaveCellType(string file, string path)
-            {
-
-
+            public static void SaveCellType(string file, string path) {
                 SaveJSON(path, file);
-                
             }
 
-            public static void SaveJSON(string path, string @json)
-            {
+            public static void SaveJSON(string path, string @json) {
                 File.WriteAllText(path, @json);
             }
         }

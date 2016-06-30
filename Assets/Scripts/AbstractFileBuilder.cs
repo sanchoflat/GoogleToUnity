@@ -350,6 +350,7 @@ namespace G2U {
                 case "bool":
                     return value.ToLower();
                 case "string":
+                    value = value.Replace("\n", "\\n");
                     return "\"" + value + "\"";
             }
             return value;

@@ -22,7 +22,6 @@ namespace G2U {
                 });
             }
             EditorCoroutine.Add(() => dataCountWasRecieved == dataForBecome, () => {
-                Debug.Log("Данные были успешно загружены");
                 if(onComplete != null) { onComplete(); }
             });
         }
