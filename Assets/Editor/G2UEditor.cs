@@ -83,7 +83,6 @@ namespace G2U {
         private void ShowMainMenu() {
             LoadDataAndSaveToJson();
             LoadDataAndGenerateClass();
-            LoadDataGenerateClassAndSaveToJson();
         }
 
         private void LoadDataAndSaveToJson() {
@@ -91,7 +90,7 @@ namespace G2U {
                 GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
                     () => {
                         try {
-                            var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
+                            GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
                                 _g2uConfig.GoogleSheetData);
                             CheckForFolders();
                             GenerateJSON();
@@ -108,7 +107,7 @@ namespace G2U {
                 GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
                     () => {
                         try {
-                            var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
+                            GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
                                 _g2uConfig.GoogleSheetData);
                             CheckForFolders();
                             GenerateClass();
@@ -119,19 +118,6 @@ namespace G2U {
                     });
             });
         }
-
-        private void LoadDataGenerateClassAndSaveToJson() {
-//            _ex.Button("Скачать Google Sheets, сгенерировать новый класс и сохранить данные в JSON", () => {
-//                GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
-//                    () => {
-//                        var text = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-//                            _g2uConfig.GoogleSheetData);
-//                        CheckForFolders();
-//                    });
-//            });
-        }
-
-
 
         #region Dopolnitelno
 
