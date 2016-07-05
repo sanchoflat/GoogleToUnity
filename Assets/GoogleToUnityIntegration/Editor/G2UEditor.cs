@@ -15,7 +15,7 @@ namespace G2U {
     public class G2UEditor : EditorWindow {
         private static G2UConfig _g2uConfig;
         private readonly EditorExtension _ex = new EditorExtension();
-        private AbstractFileBuilder.DataType _dataType = AbstractFileBuilder.DataType.XML;
+        private DataType _dataType = DataType.XML;
 
         [MenuItem("LoadGoogle/Load")]
         public static void Init() {
@@ -52,7 +52,7 @@ namespace G2U {
         }
 
         /// <summary>
-        /// Dra settings and allow to create new config. 
+        /// Draw settings and allow to create new config. 
         /// It saves on PathManager.ConfigFileInfo.FullName
         /// </summary>
         private void DrawSettingsMenu() {
@@ -162,6 +162,44 @@ namespace G2U {
             });
         }
 
+        private void GenerateData()
+        {
+            var dataFiles = new List<string>();
+            var generator = AbstractFileBuilder.GetDataBuilder(_g2uConfig, _dataType);
+            if (generator == null)
+            {
+                Debug.LogError("Cannot generate file. File generator is null");
+                return;
+            }
+            for (var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++)
+            {
+                var data = generator.GenerateFileList(GoogleDataParser.ParsedData[i]);
+                SaveLoadManager.SaveData(_g2uConfig.PathManager.GetDataDirectory(), _g2uConfig.DataExtension, data);
+                dataFiles.AddRange(data.Select(j => j.Key));
+            }
+            GenerateParameterClass(dataFiles);
+            Debug.Log("Data was successful generated");
+        }
+
+        private void GenerateParameterClass(List<string> data)
+        {
+            var file = new StringBuilder();
+            file.AppendLine(string.Format("namespace {0} {{", _g2uConfig.Namespace));
+            file.AppendLine(string.Format("{0}internal class {1} {{", AbstractFileBuilder.GetTabulator(1),
+                _g2uConfig.ParameterClassName));
+            foreach (var d in data)
+            {
+                var path = new FileInfo(Path.Combine(_g2uConfig.DataLocation, d));
+                var resourcesPath = PathManager.GetResourcesPath(path).Replace("\\", "\\\\");
+                file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\n",
+                    AbstractFileBuilder.GetTabulator(2), PathManager.PrepareFileName(d, true),
+                    PathManager.PrepareFileName(resourcesPath, false)));
+            }
+            file.Append(string.Format("{0}}}\n{1}}}", AbstractFileBuilder.GetTabulator(1),
+                AbstractFileBuilder.GetTabulator(0)));
+            SaveLoadManager.SaveFile(_g2uConfig.ParameterClassFullName, file.ToString());
+        }
+
         private void LoadSheetAndGenerateClass() {
             _g2uConfig.PathManager.CreateClassFolder();
             _ex.Button("Load Google Sheets and generate class", () => {
@@ -179,24 +217,6 @@ namespace G2U {
             });
         }
 
-        #region Generation
-
-        private void GenerateData() {
-            var dataFiles = new List<string>();
-            var generator = AbstractFileBuilder.GetDataBuilder(_g2uConfig, _dataType);
-            if(generator == null) {
-                Debug.LogError("Cannot generate file. File generator is null");
-                return;
-            }
-            for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
-                var data = generator.GenerateFiles(GoogleDataParser.ParsedData[i]);
-                SaveLoadManager.SaveData(_g2uConfig.PathManager.GetDataDirectory(), _g2uConfig.DataExtension, data);
-                dataFiles.AddRange(data.Select(j => j.Key));
-            }
-            GenerateParameterClass(dataFiles);
-            Debug.Log("Data was successful generated");
-        }
-
         private void GenerateClass() {
             var generator = AbstractFileBuilder.GetClassBuilder(_g2uConfig);
             if(generator == null) {
@@ -204,32 +224,14 @@ namespace G2U {
                 return;
             }
             for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
-                var @class = generator.GenerateFiles(GoogleDataParser.ParsedData[i]);
+                var @class = generator.GenerateFileList(GoogleDataParser.ParsedData[i]);
                 SaveLoadManager.SaveClass(_g2uConfig.PathManager.GetClassDirectory(), @class);
             }
             Debug.Log("Classes was successful generated");
         }
 
-        private void GenerateParameterClass(List<string> data) {
-            var file = new StringBuilder();
-            file.AppendLine(string.Format("namespace {0} {{", _g2uConfig.Namespace));
-            file.AppendLine(string.Format("{0}internal class {1} {{", AbstractFileBuilder.GetTabulator(1),
-                _g2uConfig.ParameterClassName));
-            foreach(var d in data) {
-                var path = new FileInfo(Path.Combine(_g2uConfig.DataLocation, d));
-                var resourcesPath = PathManager.GetResourcesPath(path).Replace("\\", "\\\\");
-                file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\n",
-                    AbstractFileBuilder.GetTabulator(2), PathManager.PrepareFileName(d, true),
-                    PathManager.PrepareFileName(resourcesPath, false)));
-            }
-            file.Append(string.Format("{0}}}\n{1}}}", AbstractFileBuilder.GetTabulator(1),
-                AbstractFileBuilder.GetTabulator(0)));
-            SaveLoadManager.SaveFile(_g2uConfig.ParameterClassFullName, file.ToString());
-        }
-
         #endregion
 
-        #endregion
 
     }
 }
