@@ -185,7 +185,7 @@ namespace G2U {
             var dataFiles = new List<string>();
             var generator = AbstractFileBuilder.GetDataBuilder(_g2uConfig, _dataType);
             if(generator == null) {
-                EditorUtility.DisplayDialog("Error", "Cannot generate file. File generator is null", "Ok");
+                Debug.LogError("Cannot generate file. File generator is null");
                 return;
             }
             for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
@@ -194,20 +194,20 @@ namespace G2U {
                 dataFiles.AddRange(data.Select(j => j.Key));
             }
             GenerateParameterClass(dataFiles);
-            EditorUtility.DisplayDialog("", "Data was successful generated", "Ok");
+            Debug.Log("Data was successful generated");
         }
 
         private void GenerateClass() {
             var generator = AbstractFileBuilder.GetClassBuilder(_g2uConfig);
             if(generator == null) {
-                EditorUtility.DisplayDialog("Error", "Cannot generate file. File generator is null", "Ok");
+                Debug.LogError("Cannot generate file. File generator is null");
                 return;
             }
             for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
                 var @class = generator.GenerateFiles(GoogleDataParser.ParsedData[i]);
                 SaveLoadManager.SaveClass(_g2uConfig.PathManager.GetClassDirectory(), @class);
             }
-            EditorUtility.DisplayDialog("", "Classes was successful generated", "Ok");
+            Debug.Log("Classes was successful generated");
         }
 
         private void GenerateParameterClass(List<string> data) {

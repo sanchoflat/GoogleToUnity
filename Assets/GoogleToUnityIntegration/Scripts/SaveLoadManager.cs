@@ -3,11 +3,12 @@ using System.IO;
 
 namespace G2U {
     public static class SaveLoadManager {
+
         public static G2UConfig LoadConfig() {
-            G2UConfig config = null;
-            if(!PathManager.ConfigFileInfo.Exists) {
+            if(!File.Exists(PathManager.ConfigFileInfo.FullName)) {
                 return null;
             }
+            G2UConfig config = null;
             return config.DeserializeFromXML(PathManager.ConfigFileInfo.FullName);
         }
 

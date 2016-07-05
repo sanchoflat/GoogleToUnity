@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 
 namespace G2U {
@@ -230,6 +231,7 @@ namespace G2U {
             for(var i = 0; i < data.Count; i++) {
                 sb.Append(data[i].GetRowString());
             }
+            sb.Append(GenerateLoadingClass());
             sb.Append(GetFileEnd());
             return sb.ToString();
         }
@@ -247,6 +249,20 @@ namespace G2U {
             var sb = new StringBuilder();
             sb.AppendLine(string.Format("{0}}}", GetTabulator(1)));
             sb.AppendLine("}");
+            return sb.ToString();
+        }
+
+        private string GenerateLoadingClass() {
+            StringBuilder sb = new StringBuilder();
+            sb.Append("\n");
+            sb.AppendLine(string.Format("{0}public static {1} Load{1}(string path) {{", GetTabulator(2), _className));
+            sb.AppendLine(string.Format("{0}var config = Resources.Load(path) as TextAsset;", GetTabulator(3)));
+            sb.AppendLine(string.Format("{0}if(string.IsNullOrEmpty(config.text)) return null;", GetTabulator(3)));
+            sb.AppendLine(string.Format("\n{0}//", GetTabulator(3)));
+            sb.AppendLine(string.Format("{0}// Please past here deserealize function", GetTabulator(3)));
+            sb.AppendLine(string.Format("{0}//\n", GetTabulator(3)));
+            sb.AppendLine(string.Format("{0}return null;", GetTabulator(3)));
+            sb.AppendLine(string.Format("{0}}}", GetTabulator(2)));
             return sb.ToString();
         }
 

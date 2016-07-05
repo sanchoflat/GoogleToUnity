@@ -5,14 +5,14 @@ using System.Text;
 namespace G2U {
     public class PathManager {
         public static FileInfo ConfigFileInfo;
-        private const string _classFolderDefault = "./Assets/Scripts/Configs";
-        private const string _dataFolderDefault = "./Assets/Resources/Configs";
-        private const string _paramFolderDefault = "./Assets/Scripts/Game/";
+        private const string _classFolderDefault    = "./Assets/Scripts/Configs";
+        private const string _dataFolderDefault     = "./Assets/Resources/Configs";
+        private const string _paramFolderDefault    = "./Assets/Scripts/Game/";
 
-        public string ClassFolderCurrent { get; set; }
-        public string DataLocation { get; set; }
-        public string ParamLocation { get; set; }
-        public string ParamClassName { get; set; }
+        public string ClassFolderCurrent    { get; set; }
+        public string DataLocation          { get; set; }
+        public string ParamLocation         { get; set; }
+        public string ParamClassName        { get; set; }
 
         static PathManager() {
             ConfigFileInfo = new FileInfo("./Assets/GoogleToUnityIntegration/Config/g2uconfig.txt");
