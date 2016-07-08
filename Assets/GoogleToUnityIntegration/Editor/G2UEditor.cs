@@ -239,10 +239,10 @@ namespace G2U {
             foreach(var d in data) {
                 var path = new FileInfo(Path.Combine(_g2uConfig.DataLocation, d));
                 var resourcesPath = PathManager.GetResourcesPath(path);
-                file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\n",
+                file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\r\n",
                     AbstractFileBuilder.GetTabulator(2), d, resourcesPath));
             }
-            file.Append(string.Format("{0}}}\n{1}}}", AbstractFileBuilder.GetTabulator(1),
+            file.Append(string.Format("{0}}}\r\n{1}}}", AbstractFileBuilder.GetTabulator(1),
                 AbstractFileBuilder.GetTabulator(0)));
             SaveLoadManager.SaveFile(_g2uConfig.ParameterClassFullName, file.ToString());
         }

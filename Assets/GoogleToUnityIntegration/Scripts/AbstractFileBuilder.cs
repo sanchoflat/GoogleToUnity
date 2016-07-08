@@ -19,11 +19,7 @@ namespace G2U {
 
 
     public abstract class AbstractFileBuilder {
-        public const string StringType = "string";
-        public const string BoolType = "bool";
-        public const string IntType = "int";
-        public const string LongType = "long";
-        public const string FloatType = "float";
+     
 
 
 
@@ -52,60 +48,11 @@ namespace G2U {
 
         public Dictionary<string, string> GenerateFileList(List<Dictionary<string, string>> data) {
             var _parsedFileData = PrepareParsedFileData(data);
-            _parsedFileData = UpdateParsedFileData(_parsedFileData);
+            _parsedFileData = TypeManager.UpdateParsedFileData(_parsedFileData);
             return GenerateFileList(_parsedFileData);
         }
 
-        private Dictionary<string, List<AbstractDataRow>> UpdateParsedFileData(
-            Dictionary<string, List<AbstractDataRow>> data) {
-                var convertedData = new List<List<AbstractDataRow>>();
-            var recordsCount = data.ElementAt(1).Value.Count;
-            var configCount = data.Count;
-            for(var i = 0; i < recordsCount; i++) {
-                convertedData.Add(new List<AbstractDataRow>(configCount - 1));
-                for(var j = 0; j < configCount - 1; j++) {
-                    convertedData[i].Add(null);
-                }
-            }
-            for(var i = 0; i < recordsCount; i++) {
-                for(var j = 1; j < configCount; j++) {
-                    var row = data.ElementAt(j);
-                    var value = row.Value[i];
-                    convertedData[i][j - 1] = value;
-                }
-            }
-            var types = new List<string>();
-            var isArray = new List<bool>();
-            for(var i = 0; i < recordsCount; i++) {
-                types.Add(GetTypeFromList(convertedData[i]));
-                isArray.Add(IsArray(convertedData[i]));
-            }
 
-            foreach(var d in data) {
-                if(d.Value == null) { continue; }
-                for(var i = 0; i < recordsCount; i++) {
-                    d.Value[i].ParameterType = types[i];
-                    d.Value[i].IsArray = isArray[i];
-                }
-            }
-            return data;
-        }
-
-        private string GetTypeFromList(List<AbstractDataRow> data) {
-            if (data.Any(row => row.ParameterType == StringType)) { return StringType; }
-            if (data.All(s => s.ParameterType == BoolType)) { return BoolType; }
-            if(data.All(s => s.ParameterType == IntType)) { return IntType; }
-            if (data.All(s => s.ParameterType == IntType || s.ParameterType == LongType)) { return LongType; }
-            if (data.All(s => s.ParameterType == IntType || s.ParameterType == FloatType || s.ParameterType == LongType))
-            {
-                return FloatType;
-            }
-            throw new ArgumentException("Cannot choose type. Check sheet data please");
-        }
-
-        private bool IsArray(List<AbstractDataRow> data) {
-            return data.Any(row => row.IsArray);
-        }
 
         protected Dictionary<string, List<AbstractDataRow>> PrepareParsedFileData(List<Dictionary<string, string>> data) {
             var keys = GetKeys(data);
@@ -416,7 +363,7 @@ namespace G2U {
             ParameterName = PathManager.PrepareFileName(parameterName, true);
             Data = data;
             if(data.Length > 0) {
-                ParameterType = GetDataType(Data);
+                ParameterType = TypeManager.GetPropertyType(Data);
             }
             else {
                 ParameterType = "string";
@@ -427,91 +374,13 @@ namespace G2U {
 
         public abstract string GetRowString();
 
-        protected string GetDataType(string[] data) {
-            if(data.Length == 1) {
-                return GetPropertyType(data[0]);
-            }
-            var types = new string[data.Length];
-            for(var i = 0; i < types.Length; i++) {
-                types[i] = GetPropertyType(data[i]);
-            }
-            return GetArrayType(types);
-        }
+       
 
         public override string ToString() {
             return string.Format("Name: {0}, Type: {1}, IsArray: {2}", ParameterName, ParameterType, IsArray);
         }
 
-        #region Get Property type
-
-        protected string GetPropertyType(string data) {
-            var str = data;
-            if(CheckForBool(str)) {
-                return AbstractFileBuilder.BoolType;
-            }
-            if(CheckForFloat(str)) {
-                return AbstractFileBuilder.FloatType;
-            }
-            if(CheckForInt(str)) {
-                return AbstractFileBuilder.IntType;
-            }
-            if(CheckForLong(str)) {
-                return AbstractFileBuilder.LongType;
-            }
-            return AbstractFileBuilder.StringType;
-        }
-
-        private bool CheckForBool(string str) {
-            return str.Equals("true", StringComparison.OrdinalIgnoreCase) ||
-                   str.Equals("false", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private bool CheckForFloat(string str) {
-            if(str.Contains(".") || str.Contains(",")) {
-                float value;
-                if(float.TryParse(str, NumberStyles.Float, new NumberFormatInfo(), out value)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private bool CheckForInt(string str) {
-            int value;
-            if(int.TryParse(str, NumberStyles.Integer, new NumberFormatInfo(), out value)) {
-                return true;
-            }
-            return false;
-        }
-
-        private bool CheckForLong(string str) {
-            long value;
-            if(long.TryParse(str, NumberStyles.Integer, new NumberFormatInfo(), out value)) {
-                return true;
-            }
-            return false;
-        }
-
-        private string GetArrayType(string[] arr) {
-            if(arr.Any(s => s == AbstractFileBuilder.StringType)) return AbstractFileBuilder.StringType;
-            if (arr.All(s => s == AbstractFileBuilder.BoolType)) return AbstractFileBuilder.BoolType;
-            if (arr.All(s => s == AbstractFileBuilder.IntType)) return AbstractFileBuilder.IntType;
-            if (arr.All(s => s == AbstractFileBuilder.IntType || s == AbstractFileBuilder.LongType)) return AbstractFileBuilder.LongType;
-            if(arr.All(s => s == AbstractFileBuilder.IntType || s == AbstractFileBuilder.FloatType)) return AbstractFileBuilder.FloatType;
-            if (arr.All(s => s == AbstractFileBuilder.FloatType || s == AbstractFileBuilder.LongType)) return AbstractFileBuilder.FloatType;
-            throw new Exception("Cannot compute array type. Please check sheet data.\n" + GetErrorData(arr));
-        }
-
-
-        private string GetErrorData(string[] types) {
-            StringBuilder sb = new StringBuilder();
-            for(int i = 0; i < types.Length; i++) {
-                sb.Append(types[i] + "  ");
-            }
-            return sb.ToString();
-        }
-
-        #endregion
+       
     }
 
     public class JSONDataRow : AbstractDataRow {
@@ -545,9 +414,9 @@ namespace G2U {
 
         private string GetValueFormat(string value, string type) {
             switch(type) {
-                case AbstractFileBuilder.BoolType:
+                case TypeManager.BoolType:
                     return value.ToLower();
-                case AbstractFileBuilder.StringType:
+                case TypeManager.StringType:
                     value = value.Replace("\n", "\\n");
                     return "\"" + value + "\"";
             }
@@ -582,7 +451,7 @@ namespace G2U {
         }
 
         private string GetType(int counter) {
-            return ParameterType == AbstractFileBuilder.BoolType ? Data[counter].ToLower() : Data[counter];
+            return ParameterType == TypeManager.BoolType ? Data[counter].ToLower() : Data[counter];
         }
 
         private string GetOpenTag(string par) {

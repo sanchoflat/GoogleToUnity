@@ -53,7 +53,7 @@ public static class Extensions {
         using(var sww = new StringWriter()) {
             using(var writer = XmlWriter.Create(sww)) {
                 ser.Serialize(writer, @object);
-                var xml = sww.ToString(); // Your XML
+                var xml = sww.ToString();
                 File.WriteAllText(path, xml);
             }
         }
