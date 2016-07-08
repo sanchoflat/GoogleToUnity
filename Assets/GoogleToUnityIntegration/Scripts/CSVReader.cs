@@ -13,7 +13,7 @@ public class CSVReader {
         if(lines.Length <= 1) { return list; }
         var header = Regex.Split(lines[0], SPLIT_RE);
         for(var i = 0; i < header.Length; i++) {
-            header[i] = PathManager.PrepareFileName(header[i], true);
+            header[i] = PathManager.PrepareFileName(header[i], false);
         }
         for(var i = 1; i < lines.Length; i++) {
             var values = Regex.Split(lines[i], SPLIT_RE);

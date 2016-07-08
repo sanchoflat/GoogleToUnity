@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 
-namespace G2U {
 
+namespace G2U {
     public enum DataType {
         JSON,
-        XML,
-        ScriptableObject
+        XML
+//        ScriptableObject
     }
 
     public enum VariableType {
@@ -17,14 +16,9 @@ namespace G2U {
         Property
     }
 
-
     public abstract class AbstractFileBuilder {
-     
-
-
-
         protected G2UConfig _config;
-       
+
         protected AbstractFileBuilder(G2UConfig config) {
             _config = config;
         }
@@ -39,20 +33,17 @@ namespace G2U {
                     return new JsonBuilder(config);
                 case DataType.XML:
                     return new XmlBuilder(config);
-                case DataType.ScriptableObject:
-                    return new ScriptableObjectBuilder(config);
+//                case DataType.ScriptableObject:
+//                    return new ScriptableObjectBuilder(config);
             }
             throw new ArgumentException("Invalid dataType: " + dataType);
         }
-
 
         public Dictionary<string, string> GenerateFileList(List<Dictionary<string, string>> data) {
             var _parsedFileData = PrepareParsedFileData(data);
             _parsedFileData = TypeManager.UpdateParsedFileData(_parsedFileData);
             return GenerateFileList(_parsedFileData);
         }
-
-
 
         protected Dictionary<string, List<AbstractDataRow>> PrepareParsedFileData(List<Dictionary<string, string>> data) {
             var keys = GetKeys(data);
@@ -69,7 +60,6 @@ namespace G2U {
                     dataList.Add(currentData[columnName]);
                     if(row == data.Count - 1) { continue; }
                     var nextData = data[row + 1];
-
 
                     // if it's array parameter - try to get it
                     var oldRow = row;
@@ -91,12 +81,11 @@ namespace G2U {
             return dictionaryData;
         }
 
-
         private string GetComment(Dictionary<string, string> row) {
             string comment;
             row.TryGetValue(_config.CommentColumnTitle, out comment);
             return comment;
-        } 
+        }
 
         private bool IsArrayParameter(Dictionary<string, string> nextData, List<string> keyList, string currentKey) {
             return string.IsNullOrEmpty(nextData[keyList[0]]) && !string.IsNullOrEmpty(nextData[currentKey]);
@@ -119,8 +108,7 @@ namespace G2U {
             return null;
         }
 
-        protected virtual StringBuilder GetFileData(List<AbstractDataRow> data)
-        {
+        protected virtual StringBuilder GetFileData(List<AbstractDataRow> data) {
             return null;
         }
 
@@ -161,7 +149,7 @@ namespace G2U {
             Dictionary<string, List<AbstractDataRow>> data) {
             var output = new Dictionary<string, string>();
             foreach(var keyPair in data) {
-                if (keyPair.Value == null) continue;
+                if(keyPair.Value == null) { continue; }
                 output.Add(keyPair.Key, GenerateFile(keyPair.Value));
             }
             return output;
@@ -288,76 +276,74 @@ namespace G2U {
         }
     }
 
-    public class ScriptableObjectBuilder : AbstractFileBuilder {
-        private string _className;
-
-        public ScriptableObjectBuilder(G2UConfig config)
-            : base(config) {}
-
-        protected override AbstractDataRow GetRowData(string parameterName, string[] data, string comment) {
-            var accessModifier = _config.SetAccessModifiers.ToString().ToLower();
-            return new ClassDataRow(parameterName, data, comment, accessModifier, VariableType.Field);
-        }
-
-        protected override Dictionary<string, string> GenerateFileList(
-            Dictionary<string, List<AbstractDataRow>> data) {
-            var output = new Dictionary<string, string>();
-            foreach(var keyPair in data) {
-                if(keyPair.Value == null) { continue; }
-                _className = keyPair.Key.Replace(" ", "");
-                output.Add(_className, GenerateFile(keyPair.Value));
-            }
-            return output;
-        }
-
-        protected override StringBuilder GetFileData(List<AbstractDataRow> data) {
-            var sb = new StringBuilder();
-            for(var i = 0; i < data.Count; i++) {
-                sb.Append(data[i].GetRowString());
-            }
-            sb.Append(GenerateLoadingClass());
-            return sb;
-        }
-
-        protected override StringBuilder GetFileStart() {
-            var sb = new StringBuilder();
-            sb.AppendLine("using UnityEngine;");
-            sb.AppendLine(string.Format("namespace {0} {{", _config.Namespace));
-            sb.AppendLine(string.Format("{0}public class {1} : ScriptableObject {{", GetTabulator(1), _className));
-            return sb;
-        }
-
-        protected override StringBuilder GetFileEnd() {
-            var sb = new StringBuilder();
-            sb.AppendLine(string.Format("{0}}}", GetTabulator(1)));
-            sb.AppendLine("}");
-            return sb;
-        }
-
-        private string GenerateLoadingClass() {
-            var sb = new StringBuilder();
-            sb.Append("\n");
-            sb.AppendLine(string.Format("{0}public static {1} Load{1}(string path) {{", GetTabulator(2), _className));
-            sb.AppendLine(string.Format("{0}var configTxt = Resources.Load(path) as TextAsset;", GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}if(string.IsNullOrEmpty(configTxt.text)) return null;", GetTabulator(3)));
-            sb.AppendLine(string.Format("\n{0}//", GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}// You can change deserialize function here", GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}UnitConfig config = null;", GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}config = config.DeserializeFromXML(path);", GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}return config;", GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}}}", GetTabulator(2)));
-            return sb.ToString();
-        }
-    }
-
-
+//    public class ScriptableObjectBuilder : AbstractFileBuilder {
+//        private string _className;
+//
+//        public ScriptableObjectBuilder(G2UConfig config)
+//            : base(config) {}
+//
+//        protected override AbstractDataRow GetRowData(string parameterName, string[] data, string comment) {
+//            var accessModifier = _config.SetAccessModifiers.ToString().ToLower();
+//            return new ClassDataRow(parameterName, data, comment, accessModifier, VariableType.Field);
+//        }
+//
+//        protected override Dictionary<string, string> GenerateFileList(
+//            Dictionary<string, List<AbstractDataRow>> data) {
+//            var output = new Dictionary<string, string>();
+//            foreach(var keyPair in data) {
+//                if(keyPair.Value == null) { continue; }
+//                _className = keyPair.Key.Replace(" ", "");
+//                output.Add(_className, GenerateFile(keyPair.Value));
+//            }
+//            return output;
+//        }
+//
+//        protected override StringBuilder GetFileData(List<AbstractDataRow> data) {
+//            var sb = new StringBuilder();
+//            for(var i = 0; i < data.Count; i++) {
+//                sb.Append(data[i].GetRowString());
+//            }
+//            sb.Append(GenerateLoadingClass());
+//            return sb;
+//        }
+//
+//        protected override StringBuilder GetFileStart() {
+//            var sb = new StringBuilder();
+//            sb.AppendLine("using UnityEngine;");
+//            sb.AppendLine(string.Format("namespace {0} {{", _config.Namespace));
+//            sb.AppendLine(string.Format("{0}public class {1} : ScriptableObject {{", GetTabulator(1), _className));
+//            return sb;
+//        }
+//
+//        protected override StringBuilder GetFileEnd() {
+//            var sb = new StringBuilder();
+//            sb.AppendLine(string.Format("{0}}}", GetTabulator(1)));
+//            sb.AppendLine("}");
+//            return sb;
+//        }
+//
+//        private string GenerateLoadingClass() {
+//            var sb = new StringBuilder();
+//            sb.Append("\n");
+//            sb.AppendLine(string.Format("{0}public static {1} Load{1}(string path) {{", GetTabulator(2), _className));
+//            sb.AppendLine(string.Format("{0}var configTxt = Resources.Load(path) as TextAsset;", GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}if(string.IsNullOrEmpty(configTxt.text)) return null;", GetTabulator(3)));
+//            sb.AppendLine(string.Format("\n{0}//", GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}// You can change deserialize function here", GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}UnitConfig config = null;", GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}config = config.DeserializeFromXML(path);", GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}return config;", GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}}}", GetTabulator(2)));
+//            return sb.ToString();
+//        }
+//    }
 
     public abstract class AbstractDataRow {
-        public string ParameterName { get;  set; }
+        public string ParameterName { get; set; }
         public string ParameterType { get; set; }
-        public string[] Data { get;  set; }
-        public bool IsArray { get;  set; }
-        public string Comment { get;  set; }
+        public string[] Data { get; set; }
+        public bool IsArray { get; set; }
+        public string Comment { get; set; }
 
         public AbstractDataRow(string parameterName, string[] data, string comment) {
             ParameterName = PathManager.PrepareFileName(parameterName, true);
@@ -374,13 +360,9 @@ namespace G2U {
 
         public abstract string GetRowString();
 
-       
-
         public override string ToString() {
             return string.Format("Name: {0}, Type: {1}, IsArray: {2}", ParameterName, ParameterType, IsArray);
         }
-
-       
     }
 
     public class JSONDataRow : AbstractDataRow {

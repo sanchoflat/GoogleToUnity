@@ -1,15 +1,11 @@
 ﻿#if UNITY_EDITOR
 using System;
-using System.CodeDom.Compiler;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using Assets.GoogleToUnityIntegration.Scripts;
 using EternalMaze.EditorWindows;
-using Microsoft.CSharp;
 using UnityEditor;
 using UnityEngine;
 
@@ -20,9 +16,8 @@ namespace G2U {
         private readonly Vector2 _minSize = new Vector2(430, 200);
         private readonly int _margin = 15;
 
-
         private static G2UConfig _g2uConfig;
-        private EditorExtension _ex = new EditorExtension();
+        private readonly EditorExtension _ex = new EditorExtension();
         private DataType _dataType = DataType.XML;
 
         [MenuItem("LoadGoogle/Load")]
@@ -34,7 +29,6 @@ namespace G2U {
         }
 
         private void OnGUI() {
-           
             InitWindow();
             MenuDrawer();
         }
@@ -66,8 +60,8 @@ namespace G2U {
         }
 
         /// <summary>
-        /// Draw settings and allow to create new config. 
-        /// It saves on PathManager.ConfigFileInfo.FullName
+        ///     Draw settings and allow to create new config.
+        ///     It saves on PathManager.ConfigFileInfo.FullName
         /// </summary>
         private void DrawSettingsMenu() {
             SettingsMenu();
@@ -81,7 +75,7 @@ namespace G2U {
         #region Settings menu
 
         /// <summary>
-        /// Draw base setting parameters
+        ///     Draw base setting parameters
         /// </summary>
         private void SettingsMenu() {
             if(_g2uConfig == null) { _g2uConfig = G2UConfig.CreateDefault(); }
@@ -95,7 +89,8 @@ namespace G2U {
                 _g2uConfig.DataLocation = _ex.TextField("Data location", _g2uConfig.DataLocation);
                 _g2uConfig.CommentColumnTitle = _ex.TextField("Comment column title", _g2uConfig.CommentColumnTitle);
                 _g2uConfig.DataExtension = _ex.TextField("Data extension", _g2uConfig.DataExtension);
-                _g2uConfig.SetAccessModifiers = _ex.EnumPopUp("Set accessModifier", "", _g2uConfig.SetAccessModifiers, true, 145);
+                _g2uConfig.SetAccessModifiers = _ex.EnumPopUp("Set accessModifier", "", _g2uConfig.SetAccessModifiers,
+                    true, 145);
                 if(_ex.Foldout("Extensions", "extensionsKey", true)) {
                     ShowGoogleSheetDataControl();
                     DrawGoogleSheetDataList();
@@ -104,7 +99,7 @@ namespace G2U {
         }
 
         /// <summary>
-        /// Draw buttons to Create/Remove GoogleSheetData
+        ///     Draw buttons to Create/Remove GoogleSheetData
         /// </summary>
         private void ShowGoogleSheetDataControl() {
             _ex.DrawHorizontal(() => {
@@ -157,8 +152,7 @@ namespace G2U {
         }
 
         private void LoadSheetAndGenerateData() {
-            _ex.DrawHorizontal(() => 
-            {
+            _ex.DrawHorizontal(() => {
                 _dataType = _ex.EnumPopUp("Data type", "dataType", _dataType, true, 80, 120);
                 _ex.Button("Load Google Sheets and save it", () => {
                     GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
@@ -174,31 +168,36 @@ namespace G2U {
                         });
                 }, position.width - 200 - _margin, 15);
             });
-
-            if(_dataType == DataType.ScriptableObject) {
-                _ex.Button("Generate scriptable object asset", () => {
-                    var selections = Selection.objects;
-                    _g2uConfig.PathManager.CreateDataFolder();
-                    var directory = _g2uConfig.PathManager.GetDataFolder();
-                    foreach(var selection in selections) {
-                        MonoScript ms = selection as MonoScript;
-                        if(ms == null) continue;
-
-                        var t = ms.GetClass().BaseType;
-                        Debug.Log(t);
-                        ScriptableObject scriptableObject = CreateInstance(ms.GetClass());
-//                        var d = Convert.ChangeType(scriptableObject, t);
-                       
-                        var path = PathManager.GetProjectRelativPath(new FileInfo(Path.Combine(directory.FullName, string.Format("{0}.asset", ms.GetClass().Name))));
-                        AssetDatabase.CreateAsset(scriptableObject, path);
-                        AssetDatabase.SaveAssets();
-                        EditorUtility.FocusProjectWindow();
-                        Selection.activeObject = scriptableObject;
-                    }
-                });
-            }
+            DrawScriptableObjectMenu();
         }
 
+        private void DrawScriptableObjectMenu() {
+//            if (_dataType == DataType.ScriptableObject)
+//            {
+//                _ex.Button("Generate scriptable object asset", () =>
+//                {
+//                    var selections = Selection.objects;
+//                    _g2uConfig.PathManager.CreateDataFolder();
+//                    var directory = _g2uConfig.PathManager.GetDataFolder();
+//                    foreach (var selection in selections)
+//                    {
+//                        MonoScript ms = selection as MonoScript;
+//                        if (ms == null) continue;
+//
+//                        var t = ms.GetClass().BaseType;
+//                        Debug.Log(t);
+//                        ScriptableObject scriptableObject = CreateInstance(ms.GetClass());
+//                        //                        var d = Convert.ChangeType(scriptableObject, t);
+//
+//                        var path = PathManager.GetProjectRelativPath(new FileInfo(Path.Combine(directory.FullName, string.Format("{0}.asset", ms.GetClass().Name))));
+//                        AssetDatabase.CreateAsset(scriptableObject, path);
+//                        AssetDatabase.SaveAssets();
+//                        EditorUtility.FocusProjectWindow();
+//                        Selection.activeObject = scriptableObject;
+//                    }
+//                });
+//            }
+        }
 
         private void GenerateData() {
             var dataFiles = new List<string>();
@@ -218,15 +217,16 @@ namespace G2U {
         }
 
         private DirectoryInfo GetDataDirectory() {
-            if(_dataType == DataType.ScriptableObject)
-                return _g2uConfig.PathManager.GetClassFolder();
+//            if(_dataType == DataType.ScriptableObject)
+//                return _g2uConfig.PathManager.GetClassFolder();
             return _g2uConfig.PathManager.GetDataFolder();
         }
+
         private string GetDataExtension() {
-            switch(_dataType) {
-                case DataType.ScriptableObject:
-                    return ".cs";
-            }
+//            switch(_dataType) {
+//                case DataType.ScriptableObject:
+//                    return ".cs";
+//            }
             return _g2uConfig.DataExtension;
         }
 
@@ -280,5 +280,6 @@ namespace G2U {
         #endregion
     }
 }
+
 
 #endif
