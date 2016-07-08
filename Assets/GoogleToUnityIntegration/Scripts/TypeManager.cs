@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.Remoting.Messaging;
 using System.Text;
 
 
@@ -59,14 +60,7 @@ namespace G2U {
         }
 
         private static string GetTypeFromList(List<AbstractDataRow> data) {
-            if(data.Any(row => row.ParameterType == StringType)) { return StringType; }
-            if(data.All(s => s.ParameterType == BoolType)) { return BoolType; }
-            if(data.All(s => s.ParameterType == IntType)) { return IntType; }
-            if(data.All(s => s.ParameterType == IntType || s.ParameterType == LongType)) { return LongType; }
-            if(data.All(s => s.ParameterType == IntType || s.ParameterType == FloatType || s.ParameterType == LongType)) {
-                return FloatType;
-            }
-            throw new ArgumentException("Cannot choose type. Check sheet data please");
+            return GetArrayType(data.Select(row => row.ParameterType).ToArray());
         }
 
         private static bool IsArray(List<AbstractDataRow> data) {
@@ -129,7 +123,7 @@ namespace G2U {
             if(arr.All(s => s == IntType)) { return IntType; }
             if(arr.All(s => s == IntType || s == LongType)) { return LongType; }
             if(arr.All(s => s == IntType || s == FloatType)) { return FloatType; }
-            if(arr.All(s => s == FloatType || s == LongType)) { return FloatType; }
+            if(arr.All(s => s == FloatType || s == LongType || s == IntType)) { return FloatType; }
             throw new Exception("Cannot compute array type. Please check sheet data.\n" + GetErrorData(arr));
         }
 

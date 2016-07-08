@@ -240,7 +240,7 @@ namespace G2U {
                 var path = new FileInfo(Path.Combine(_g2uConfig.DataLocation, d));
                 var resourcesPath = PathManager.GetResourcesPath(path);
                 file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\r\n",
-                    AbstractFileBuilder.GetTabulator(2), d, resourcesPath));
+                    AbstractFileBuilder.GetTabulator(2), d.UppercaseFirst(), resourcesPath));
             }
             file.Append(string.Format("{0}}}\r\n{1}}}", AbstractFileBuilder.GetTabulator(1),
                 AbstractFileBuilder.GetTabulator(0)));
