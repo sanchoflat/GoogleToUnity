@@ -14,8 +14,6 @@ namespace EternalMaze.EditorWindows {
         private readonly Dictionary<string, int> _intPopUP = new Dictionary<string, int>();
         private readonly Dictionary<string, string> _enumPopup = new Dictionary<string, string>();
 
-
-
         public bool Toggle(string label, bool value) {
             value = EditorGUILayout.Toggle(new GUIContent(label), value); GUI.color = Color.white;
             return value;
@@ -165,7 +163,7 @@ namespace EternalMaze.EditorWindows {
             if(action == null) { return; }
             GUILayout.BeginHorizontal(GetGUIStyle(bgColor, border));
             action();
-            GUILayout.EndHorizontal();
+            GUILayout.EndHorizontal(); 
         }
 
         public void DrawVertical(Action action, string title = null, bool scroll = false, Color bgColor = default(Color), bool border = false) {
@@ -215,18 +213,17 @@ namespace EternalMaze.EditorWindows {
             return _popUP[id];
         }
 
-        public T EnumPopUp<T>(string text, string id, T defaultValue, bool visualize = false, int width = 0)
+        public T EnumPopUp<T>(string text, string id, T defaultValue, bool visualize = false, float textWidth = 100, float enumWidth = 100)
             where T : struct, IConvertible {
             CheckKey(_enumPopup, id, defaultValue.ToString());
-            if(visualize) {
-                if(width > 0) {
-                    _enumPopup[id] =
-                        EditorGUILayout.EnumPopup(text, GetEnumFromString<T>(_enumPopup[id]), GUILayout.Width(width))
-                            .ToString();
-                }
-                else {
-                    _enumPopup[id] = EditorGUILayout.EnumPopup(text, GetEnumFromString<T>(_enumPopup[id])).ToString();
-                }
+            if (visualize) {
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField(text, GUILayout.Width(textWidth));
+                _enumPopup[id] =
+                    EditorGUILayout.EnumPopup("", GetEnumFromString<T>(_enumPopup[id]), GUILayout.Width(enumWidth))
+                        .ToString();
+
+                EditorGUILayout.EndHorizontal();
             }
             return (T) Enum.Parse(typeof(T), _enumPopup[id]);
         }
@@ -241,15 +238,16 @@ namespace EternalMaze.EditorWindows {
             return _intPopUP[id];
         }
 
-        public void Button(string text, Action action, int width = -1) {
+        public void Button(string text, Action action, float width = -1, float height = 20) {
             if(action == null) { return; }
             if(width > 0) {
-                if(GUILayout.Button(text, GUILayout.Width(width))) {
+                if (GUILayout.Button(text, GUILayout.Width(width), GUILayout.Height(height)))
+                {
                     action();
                 }
             }
             else {
-                if(GUILayout.Button(text)) {
+                if(GUILayout.Button(text, GUILayout.Height(height))) {
                     action();
                 }
             }

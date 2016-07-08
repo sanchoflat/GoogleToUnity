@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 
 namespace G2U {
-    internal class EditorCoroutine {
+    public class EditorCoroutine {
         private static readonly List<Job> jobs = new List<Job>();
 
         public static void Add(Func<bool> completed, Action continueWith) {

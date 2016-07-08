@@ -5,14 +5,14 @@ using System.Text;
 namespace G2U {
     public class PathManager {
         public static FileInfo ConfigFileInfo;
-        private const string _classFolderDefault    = "./Assets/Scripts/Configs";
-        private const string _dataFolderDefault     = "./Assets/Resources/Configs";
-        private const string _paramFolderDefault    = "./Assets/Scripts/Game/";
+        private const string _classFolderDefault = "./Assets/Scripts/Configs";
+        private const string _dataFolderDefault = "./Assets/Resources/Configs";
+        private const string _paramFolderDefault = "./Assets/Scripts/Game/";
 
-        public string ClassFolderCurrent    { get; set; }
-        public string DataLocation          { get; set; }
-        public string ParamLocation         { get; set; }
-        public string ParamClassName        { get; set; }
+        public string ClassFolderCurrent { get; set; }
+        public string DataLocation { get; set; }
+        public string ParamLocation { get; set; }
+        public string ParamClassName { get; set; }
 
         static PathManager() {
             ConfigFileInfo = new FileInfo("./Assets/GoogleToUnityIntegration/Config/g2uconfig.txt");
@@ -24,15 +24,15 @@ namespace G2U {
             ParamLocation = _paramFolderDefault;
         }
 
-        public DirectoryInfo GetDataDirectory() {
+        public DirectoryInfo GetDataFolder() {
             return new DirectoryInfo(DataLocation);
         }
 
-        public DirectoryInfo GetClassDirectory() {
+        public DirectoryInfo GetClassFolder() {
             return new DirectoryInfo(ClassFolderCurrent);
         }
 
-        public DirectoryInfo GetParamDirectory() {
+        public DirectoryInfo GetParamFolder() {
             return new DirectoryInfo(ParamLocation);
         }
 
@@ -47,12 +47,17 @@ namespace G2U {
         }
 
         public void CreateClassFolder() {
-            var d = GetClassDirectory();
+            var d = GetClassFolder();
             CreateFolder(d);
         }
 
         public void CreateDataFolder() {
-            var d = GetDataDirectory();
+            var d = GetDataFolder();
+            CreateFolder(d);
+        }
+
+        public void CreateParameterFolder() {
+            var d = GetParamFolder();
             CreateFolder(d);
         }
 
@@ -62,7 +67,7 @@ namespace G2U {
             CreateFolder(fileInfo.Directory);
         }
 
-        private void CreateFolder(DirectoryInfo directory) {
+        public void CreateFolder(DirectoryInfo directory) {
             if(directory == null) { return; }
             if(!directory.Exists) {
                 directory.Create();
@@ -85,6 +90,26 @@ namespace G2U {
             for(var i = 0; i < splittedText.Length; i++) {
                 if(splittedText[i] == "Resources") {
                     for(var j = i + 1; j < splittedText.Length; j++) {
+                        sb.Append(splittedText[j] + "/");
+                    }
+                }
+            }
+            sb.Append(file);
+            return sb.ToString();
+        }
+
+        public static string GetProjectRelativPath(FileInfo path)
+        {
+            var directory = path.DirectoryName;
+            var file = path.Name;
+            var splittedText = directory.Split('\\');
+            var sb = new StringBuilder();
+            for (var i = 0; i < splittedText.Length; i++)
+            {
+                if (splittedText[i] == "Assets")
+                {
+                    for (var j = i; j < splittedText.Length; j++)
+                    {
                         sb.Append(splittedText[j] + "\\");
                     }
                 }

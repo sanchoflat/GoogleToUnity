@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using UnityEditor;
+
 
 namespace G2U {
     public static class SaveLoadManager {
@@ -9,7 +11,7 @@ namespace G2U {
                 return null;
             }
             G2UConfig config = null;
-            return config.DeserializeFromXML(PathManager.ConfigFileInfo.FullName);
+            return config.DeserializeXMLFromPath(PathManager.ConfigFileInfo.FullName);
         }
 
         public static void SaveConfig(G2UConfig config) {
@@ -19,20 +21,22 @@ namespace G2U {
 
         public static void SaveClass(DirectoryInfo directory, Dictionary<string, string> classDict) {
             foreach(var d in classDict) {
-                var p = Path.Combine(directory.FullName, PathManager.PrepareFileName(d.Key, false) + ".cs");
+                var p = Path.Combine(directory.FullName, d.Key + ".cs");
                 SaveFile(p, @d.Value);
             }
         }
 
-        public static void SaveData(DirectoryInfo directory, string extension, Dictionary<string, string> data) {
+        public static void SaveData(DirectoryInfo directory, string extension, Dictionary<string, string> data,
+            DataType dataType) {
             foreach(var d in data) {
-                var p = Path.Combine(directory.FullName, PathManager.PrepareFileName(d.Key, false) + extension);
+                var p = Path.Combine(directory.FullName, d.Key + extension);
                 SaveFile(p, @d.Value);
             }
         }
 
         public static void SaveFile(string path, string file) {
             File.WriteAllText(path, file);
+            AssetDatabase.Refresh();
         }
     }
 }

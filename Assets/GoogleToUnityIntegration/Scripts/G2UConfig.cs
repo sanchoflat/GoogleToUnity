@@ -1,7 +1,16 @@
 ﻿using System.Collections.Generic;
 
 
+
 namespace G2U {
+
+    public enum SetAccessModifiers {
+        Public,
+        Private,
+        Protected
+    }
+
+
     public class G2UConfig {
         public List<GoogleSheetData> GoogleSheetData { get; set; }
         public bool WasInizialized { get; set; }
@@ -9,6 +18,7 @@ namespace G2U {
         public string SkipRowPrefix { get; set; }
         public string CommentColumnTitle { get; set; }
         public string DataExtension { get; set; }
+        public SetAccessModifiers SetAccessModifiers { get; set; }
 
         public string ParameterClassName {
             get { return PathManager.ParamClassName; }
@@ -51,7 +61,8 @@ namespace G2U {
                 GoogleSheetData = new List<GoogleSheetData> {
                     G2U.GoogleSheetData.CreateDefaultData()
                 },
-                DataExtension = ".txt"
+                DataExtension = ".txt",
+                SetAccessModifiers = SetAccessModifiers.Public
             };
         }
 

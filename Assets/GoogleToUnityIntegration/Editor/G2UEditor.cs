@@ -1,11 +1,15 @@
 ﻿#if UNITY_EDITOR
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Assets.GoogleToUnityIntegration.Scripts;
 using EternalMaze.EditorWindows;
+using Microsoft.CSharp;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,8 +17,12 @@ using UnityEngine;
 namespace G2U {
     [ExecuteInEditMode]
     public class G2UEditor : EditorWindow {
+        private readonly Vector2 _minSize = new Vector2(430, 200);
+        private readonly int _margin = 15;
+
+
         private static G2UConfig _g2uConfig;
-        private readonly EditorExtension _ex = new EditorExtension();
+        private EditorExtension _ex = new EditorExtension();
         private DataType _dataType = DataType.XML;
 
         [MenuItem("LoadGoogle/Load")]
@@ -26,7 +34,13 @@ namespace G2U {
         }
 
         private void OnGUI() {
+           
+            InitWindow();
             MenuDrawer();
+        }
+
+        private void InitWindow() {
+            minSize = _minSize;
         }
 
         private void MenuDrawer() {
@@ -81,6 +95,7 @@ namespace G2U {
                 _g2uConfig.DataLocation = _ex.TextField("Data location", _g2uConfig.DataLocation);
                 _g2uConfig.CommentColumnTitle = _ex.TextField("Comment column title", _g2uConfig.CommentColumnTitle);
                 _g2uConfig.DataExtension = _ex.TextField("Data extension", _g2uConfig.DataExtension);
+                _g2uConfig.SetAccessModifiers = _ex.EnumPopUp("Set accessModifier", "", _g2uConfig.SetAccessModifiers, true, 145);
                 if(_ex.Foldout("Extensions", "extensionsKey", true)) {
                     ShowGoogleSheetDataControl();
                     DrawGoogleSheetDataList();
@@ -142,10 +157,9 @@ namespace G2U {
         }
 
         private void LoadSheetAndGenerateData() {
-            _g2uConfig.PathManager.CreateDataFolder();
-            _g2uConfig.PathManager.CreateClassFolder();
-            _ex.DrawHorizontal(() => {
-                _dataType = _ex.EnumPopUp("Data type", "dataType", _dataType, true);
+            _ex.DrawHorizontal(() => 
+            {
+                _dataType = _ex.EnumPopUp("Data type", "dataType", _dataType, true, 80, 120);
                 _ex.Button("Load Google Sheets and save it", () => {
                     GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
                         () => {
@@ -158,42 +172,75 @@ namespace G2U {
                                 Debug.LogError(e.Message);
                             }
                         });
-                });
+                }, position.width - 200 - _margin, 15);
             });
+
+            if(_dataType == DataType.ScriptableObject) {
+                _ex.Button("Generate scriptable object asset", () => {
+                    var selections = Selection.objects;
+                    _g2uConfig.PathManager.CreateDataFolder();
+                    var directory = _g2uConfig.PathManager.GetDataFolder();
+                    foreach(var selection in selections) {
+                        MonoScript ms = selection as MonoScript;
+                        if(ms == null) continue;
+
+                        var t = ms.GetClass().BaseType;
+                        Debug.Log(t);
+                        ScriptableObject scriptableObject = CreateInstance(ms.GetClass());
+//                        var d = Convert.ChangeType(scriptableObject, t);
+                       
+                        var path = PathManager.GetProjectRelativPath(new FileInfo(Path.Combine(directory.FullName, string.Format("{0}.asset", ms.GetClass().Name))));
+                        AssetDatabase.CreateAsset(scriptableObject, path);
+                        AssetDatabase.SaveAssets();
+                        EditorUtility.FocusProjectWindow();
+                        Selection.activeObject = scriptableObject;
+                    }
+                });
+            }
         }
 
-        private void GenerateData()
-        {
+
+        private void GenerateData() {
             var dataFiles = new List<string>();
             var generator = AbstractFileBuilder.GetDataBuilder(_g2uConfig, _dataType);
-            if (generator == null)
-            {
+            if(generator == null) {
                 Debug.LogError("Cannot generate file. File generator is null");
                 return;
             }
-            for (var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++)
-            {
+            _g2uConfig.PathManager.CreateFolder(GetDataDirectory());
+            for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
                 var data = generator.GenerateFileList(GoogleDataParser.ParsedData[i]);
-                SaveLoadManager.SaveData(_g2uConfig.PathManager.GetDataDirectory(), _g2uConfig.DataExtension, data);
+                SaveLoadManager.SaveData(GetDataDirectory(), GetDataExtension(), data, _dataType);
                 dataFiles.AddRange(data.Select(j => j.Key));
             }
             GenerateParameterClass(dataFiles);
             Debug.Log("Data was successful generated");
         }
 
-        private void GenerateParameterClass(List<string> data)
-        {
+        private DirectoryInfo GetDataDirectory() {
+            if(_dataType == DataType.ScriptableObject)
+                return _g2uConfig.PathManager.GetClassFolder();
+            return _g2uConfig.PathManager.GetDataFolder();
+        }
+        private string GetDataExtension() {
+            switch(_dataType) {
+                case DataType.ScriptableObject:
+                    return ".cs";
+            }
+            return _g2uConfig.DataExtension;
+        }
+
+        private void GenerateParameterClass(List<string> data) {
+            _g2uConfig.PathManager.CreateParameterFolder();
             var file = new StringBuilder();
             file.AppendLine(string.Format("namespace {0} {{", _g2uConfig.Namespace));
             file.AppendLine(string.Format("{0}internal class {1} {{", AbstractFileBuilder.GetTabulator(1),
                 _g2uConfig.ParameterClassName));
-            foreach (var d in data)
-            {
+            foreach(var d in data) {
                 var path = new FileInfo(Path.Combine(_g2uConfig.DataLocation, d));
-                var resourcesPath = PathManager.GetResourcesPath(path).Replace("\\", "\\\\");
+                var resourcesPath = PathManager.GetResourcesPath(path);
                 file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\n",
-                    AbstractFileBuilder.GetTabulator(2), PathManager.PrepareFileName(d, true),
-                    PathManager.PrepareFileName(resourcesPath, false)));
+                    AbstractFileBuilder.GetTabulator(2), d, resourcesPath));
             }
             file.Append(string.Format("{0}}}\n{1}}}", AbstractFileBuilder.GetTabulator(1),
                 AbstractFileBuilder.GetTabulator(0)));
@@ -201,7 +248,6 @@ namespace G2U {
         }
 
         private void LoadSheetAndGenerateClass() {
-            _g2uConfig.PathManager.CreateClassFolder();
             _ex.Button("Load Google Sheets and generate class", () => {
                 GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
                     () => {
@@ -223,16 +269,15 @@ namespace G2U {
                 Debug.LogError("Cannot generate file. File generator is null");
                 return;
             }
+            _g2uConfig.PathManager.CreateClassFolder();
             for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
                 var @class = generator.GenerateFileList(GoogleDataParser.ParsedData[i]);
-                SaveLoadManager.SaveClass(_g2uConfig.PathManager.GetClassDirectory(), @class);
+                SaveLoadManager.SaveClass(_g2uConfig.PathManager.GetClassFolder(), @class);
             }
             Debug.Log("Classes was successful generated");
         }
 
         #endregion
-
-
     }
 }
 
