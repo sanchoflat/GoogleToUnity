@@ -2,7 +2,6 @@
 using System.IO;
 using UnityEditor;
 
-
 namespace G2U {
     public static class SaveLoadManager {
 

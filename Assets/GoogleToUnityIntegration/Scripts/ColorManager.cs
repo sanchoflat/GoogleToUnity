@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 
-
 namespace Assets.GoogleToUnityIntegration.Scripts {
     public class ColorManager {
-
         public static void Reset() {
             _colorCounter = 0;
         }

@@ -17,7 +17,8 @@ namespace G2U {
             return ParsedData;
         }
 
-        public static List<Dictionary<string, string>> ParseSheet(string sheet) {
+        public static List<Dictionary<string, string>> ParseSheet(string sheet)
+        {
             try {
                 return CSVReader.Read(sheet);
             }

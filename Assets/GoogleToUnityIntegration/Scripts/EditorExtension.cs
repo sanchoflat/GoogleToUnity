@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace EternalMaze.EditorWindows {
     public class EditorExtension {
-
         private readonly Dictionary<string, Vector2> _scrollVectors = new Dictionary<string, Vector2>();
         private readonly Dictionary<string, bool> _foldoutBool = new Dictionary<string, bool>();
         private readonly Dictionary<string, int> _popUP = new Dictionary<string, int>();
@@ -15,58 +14,45 @@ namespace EternalMaze.EditorWindows {
         private readonly Dictionary<string, string> _enumPopup = new Dictionary<string, string>();
 
         public bool Toggle(string label, bool value) {
-            value = EditorGUILayout.Toggle(new GUIContent(label), value); GUI.color = Color.white;
+            value = EditorGUILayout.Toggle(new GUIContent(label), value);
+            GUI.color = Color.white;
+            return value;
+        }
+
+        public int IntInput(string label, int value, Color color = default(Color)) {
+            color = PrepareDefaultColor(color);
+            GUI.color = color;
+            value = EditorGUILayout.IntField(new GUIContent(label), value);
+            GUI.color = Color.white;
+            return value;
+        }
+
+        public int IntInput(string label, string tooltip, int value, Color color = default(Color)) {
+            color = PrepareDefaultColor(color);
+            GUI.color = color;
+            value = EditorGUILayout.IntField(new GUIContent(label, tooltip), value);
+            GUI.color = Color.white;
+            return value;
+        }
+
+        public string TextField(string label, string value, Color color = default(Color)) {
+            color = PrepareDefaultColor(color);
+            GUI.color = color;
+            value = EditorGUILayout.TextField(new GUIContent(label), value);
+            GUI.color = Color.white;
+            return value;
+        }
+
+        public string TextField(string label, string tooltip, string value, Color color = default(Color)) {
+            color = PrepareDefaultColor(color);
+            GUI.color = color;
+            value = EditorGUILayout.TextField(new GUIContent(label, tooltip), value);
+            GUI.color = Color.white;
             return value;
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="label"></param>
-        /// <param name="value"></param>
-        /// <param name="color"></param>
-        /// <returns></returns>
-        public int IntInput(string label, int value, Color color = default(Color))
-        {
-            color = PrepareDefaultColor(color); GUI.color = color;
-            value = EditorGUILayout.IntField(new GUIContent(label), value); GUI.color = Color.white;
-            return value;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="label"></param>
-        /// <param name="tooltip"></param>
-        /// <param name="value"></param>
-        /// <param name="color"></param>
-        /// <returns></returns>
-        public int IntInput(string label, string tooltip, int value, Color color = default(Color))
-        {
-            color = PrepareDefaultColor(color); GUI.color = color;
-            value = EditorGUILayout.IntField(new GUIContent(label, tooltip), value); GUI.color = Color.white;
-            return value;
-        }
-
-
-
-        public string TextField(string label, string value, Color color = default(Color))
-        {
-            color = PrepareDefaultColor(color); GUI.color = color;
-            value = EditorGUILayout.TextField(new GUIContent(label), value); GUI.color = Color.white;
-            return value;
-        }
-
-        public string TextField(string label, string tooltip, string value, Color color = default(Color))
-        {
-            color = PrepareDefaultColor(color); GUI.color = color;
-            value = EditorGUILayout.TextField(new GUIContent(label, tooltip), value); GUI.color = Color.white;
-            return value;
-        }
-
-
-        /// <summary>
-        /// Int Slider
+        ///     Int Slider
         /// </summary>
         /// <param name="label">Label перед слайдером</param>
         /// <param name="value">Значение, которое будет изменяться</param>
@@ -77,11 +63,11 @@ namespace EternalMaze.EditorWindows {
         /// <returns></returns>
         public int IntSlider(string label, int value, int leftValue, int rightValue, int step = 1, bool visualize = true,
             Color color = default(Color)) {
-                return IntSlider(label, "", value, leftValue, rightValue, step, visualize, color);
+            return IntSlider(label, "", value, leftValue, rightValue, step, visualize, color);
         }
 
         /// <summary>
-        /// Int Slider
+        ///     Int Slider
         /// </summary>
         /// <param name="label">Label перед слайдером</param>
         /// <param name="tooltip">Подсказка</param>
@@ -98,19 +84,16 @@ namespace EternalMaze.EditorWindows {
                 GUI.color = color;
                 value = EditorGUILayout.IntSlider(new GUIContent(label, tooltip), value, leftValue,
                     rightValue);
-
-                if (step > 0)
-                {
-                    value = (int)Math.Round((value / (double)step)) * step;
+                if(step > 0) {
+                    value = (int) Math.Round((value / (double) step)) * step;
                 }
                 GUI.color = Color.white;
             }
             return value;
         }
 
-
         /// <summary>
-        /// Float Slider
+        ///     Float Slider
         /// </summary>
         /// <param name="label">Label перед слайдером</param>
         /// <param name="value">Значение, которое будет изменяться</param>
@@ -118,16 +101,16 @@ namespace EternalMaze.EditorWindows {
         /// <param name="rightValue">Максимальное значение</param>
         /// <param name="step">Значение шага</param>
         /// <param name="visualize">Если визуализировать, то рисуется слайдер. Если нет, то вернуть сохранённое значение в словаре</param>
-        /// <param name="color">Цвет отрисовки элемента</param>  
+        /// <param name="color">Цвет отрисовки элемента</param>
         /// <param name="dValue">Дефолтное значение для инициализации</param>
         /// <returns></returns>
         public float FloatSlider(string label, float value, float leftValue, float rightValue, float step = 0.05f,
             bool visualize = true, Color color = default(Color)) {
-                return FloatSlider(label, "", value, leftValue, rightValue, step, visualize, color);
+            return FloatSlider(label, "", value, leftValue, rightValue, step, visualize, color);
         }
 
         /// <summary>
-        /// Float Slider
+        ///     Float Slider
         /// </summary>
         /// <param name="label">Label перед слайдером</param>
         /// <param name="tooltip">Подсказка</param>
@@ -144,29 +127,25 @@ namespace EternalMaze.EditorWindows {
             color = PrepareDefaultColor(color);
             if(visualize) {
                 GUI.color = color;
-
                 value = EditorGUILayout.Slider(new GUIContent(label, tooltip), value, leftValue,
                     rightValue);
                 if(step > 0) {
-                    value = (float)Math.Round((value / step)) * step;
+                    value = (float) Math.Round((value / step)) * step;
                 }
                 GUI.color = Color.white;
             }
             return value;
         }
 
-   
-        
-    
-
         public void DrawHorizontal(Action action, Color bgColor = default(Color), bool border = false) {
             if(action == null) { return; }
             GUILayout.BeginHorizontal(GetGUIStyle(bgColor, border));
             action();
-            GUILayout.EndHorizontal(); 
+            GUILayout.EndHorizontal();
         }
 
-        public void DrawVertical(Action action, string title = null, bool scroll = false, Color bgColor = default(Color), bool border = false) {
+        public void DrawVertical(Action action, string title = null, bool scroll = false, Color bgColor = default(Color),
+            bool border = false) {
             if(action == null) { return; }
             if(scroll) {
                 CheckKey(_scrollVectors, action.ToString());
@@ -213,16 +192,19 @@ namespace EternalMaze.EditorWindows {
             return _popUP[id];
         }
 
-        public T EnumPopUp<T>(string text, string id, T defaultValue, bool visualize = false, float textWidth = 100, float enumWidth = 100)
+        public T EnumPopUp<T>(string text, string id, T defaultValue, bool visualize = false,
+            float textWidth = 100, float enumWidth = 100)
             where T : struct, IConvertible {
+            if(id == null) {
+                id = text;
+            }
             CheckKey(_enumPopup, id, defaultValue.ToString());
-            if (visualize) {
+            if(visualize) {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(text, GUILayout.Width(textWidth));
                 _enumPopup[id] =
                     EditorGUILayout.EnumPopup("", GetEnumFromString<T>(_enumPopup[id]), GUILayout.Width(enumWidth))
                         .ToString();
-
                 EditorGUILayout.EndHorizontal();
             }
             return (T) Enum.Parse(typeof(T), _enumPopup[id]);
@@ -241,8 +223,7 @@ namespace EternalMaze.EditorWindows {
         public void Button(string text, Action action, float width = -1, float height = 20) {
             if(action == null) { return; }
             if(width > 0) {
-                if (GUILayout.Button(text, GUILayout.Width(width), GUILayout.Height(height)))
-                {
+                if(GUILayout.Button(text, GUILayout.Width(width), GUILayout.Height(height))) {
                     action();
                 }
             }
@@ -262,7 +243,10 @@ namespace EternalMaze.EditorWindows {
         /// <summary>
         ///     Выпадающее меню
         /// </summary>
-        public bool Foldout(string text, string id, bool visualize = false) {
+        public bool Foldout(string text, string id = null, bool visualize = false) {
+            if(id == null) {
+                id = text;
+            }
             CheckKey(_foldoutBool, id);
             if(visualize) {
                 _foldoutBool[id] = EditorGUILayout.Foldout(_foldoutBool[id], text);
@@ -282,13 +266,14 @@ namespace EternalMaze.EditorWindows {
         }
 
         /// <summary>
-        /// ПОдготавливает цвет фона. Если пришёл дефолтный цвет, то вернуть белый
+        ///     ПОдготавливает цвет фона. Если пришёл дефолтный цвет, то вернуть белый
         /// </summary>
         /// <param name="color"></param>
         /// <returns></returns>
         private Color PrepareDefaultColor(Color color) {
-            if(color.Equals(default(Color)))
+            if(color.Equals(default(Color))) {
                 return new Color(1, 1, 1, 1f);
+            }
             return color;
         }
 

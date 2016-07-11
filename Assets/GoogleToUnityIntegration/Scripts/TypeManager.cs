@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Text;
 
 
@@ -48,16 +47,34 @@ namespace G2U {
             return data;
         }
 
-        public static string GetPropertyType(string[] data) {
+        public static string GetPropertyType(ref string[] data, string arraySeparator) {
             if(data.Length == 1) {
-                return GetPropertyType(data[0]);
+                var arr = GetArrayString(data[0], arraySeparator);
+                if(arr.Length == 1) {
+                    return GetPropertyType(data[0]);
+                }
+                data = arr;
             }
+
+            var list = new List<string>();
+            for (int i = 0; i < data.Length; i++) {
+                var tmpArr = GetArrayString(data[i], arraySeparator);
+                list.AddRange(tmpArr);
+            }
+
+            data = list.ToArray();
             var types = new string[data.Length];
             for(var i = 0; i < types.Length; i++) {
                 types[i] = GetPropertyType(data[i]);
             }
             return GetArrayType(types);
         }
+
+        private static string[] GetArrayString(string data, string arraySeparator) {
+            var parsedData = data.Split(new []{arraySeparator}, StringSplitOptions.None);
+            return parsedData;
+        }
+
 
         private static string GetTypeFromList(List<AbstractDataRow> data) {
             return GetArrayType(data.Select(row => row.ParameterType).ToArray());

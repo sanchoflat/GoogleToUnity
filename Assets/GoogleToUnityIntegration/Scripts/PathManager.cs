@@ -98,18 +98,14 @@ namespace G2U {
             return sb.ToString();
         }
 
-        public static string GetProjectRelativPath(FileInfo path)
-        {
+        public static string GetProjectRelativPath(FileInfo path) {
             var directory = path.DirectoryName;
             var file = path.Name;
             var splittedText = directory.Split('\\');
             var sb = new StringBuilder();
-            for (var i = 0; i < splittedText.Length; i++)
-            {
-                if (splittedText[i] == "Assets")
-                {
-                    for (var j = i; j < splittedText.Length; j++)
-                    {
+            for(var i = 0; i < splittedText.Length; i++) {
+                if(splittedText[i] == "Assets") {
+                    for(var j = i; j < splittedText.Length; j++) {
                         sb.Append(splittedText[j] + "\\");
                     }
                 }

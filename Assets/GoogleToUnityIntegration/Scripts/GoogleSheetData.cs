@@ -1,10 +1,12 @@
-﻿using System.IO;
-
-
-namespace G2U {
+﻿namespace G2U {
     public enum SheetType {
         Config,
         Localization
+    }
+
+    public enum VariableType {
+        Field,
+        Property
     }
 
     public class GoogleSheetData {
@@ -23,7 +25,6 @@ namespace G2U {
         }
 
         public string GoogleDataName { get; set; }
-       
         public string GoogleDriveFileGuid { get; set; }
         public string GoogleDriveSheetGuid { get; set; }
 
@@ -31,7 +32,6 @@ namespace G2U {
             if(string.IsNullOrEmpty(GoogleDriveFileGuid) || string.IsNullOrEmpty(GoogleDriveSheetGuid)) { return null; }
             return string.Format(GoogleDriveFormat, GoogleDriveFileGuid, GoogleDriveSheetGuid);
         }
-
 
         public static GoogleSheetData CreateDefaultData() {
             return new GoogleSheetData("", "", "");

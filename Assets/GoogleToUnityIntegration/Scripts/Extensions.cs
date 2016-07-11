@@ -28,8 +28,6 @@ public static class Extensions {
         return char.ToUpper(s[0]) + s.Substring(1);
     }
 
-    
-
     public static T DeserializeXMLFromPath<T>(this T @object, string path) {
         var serializer = new XmlSerializer(typeof(T));
         var reader = new StreamReader(path);
@@ -38,16 +36,14 @@ public static class Extensions {
         return @object;
     }
 
-    public static T DeserializeFromXMLString<T>(this string data)
-    {
+    public static T DeserializeFromXMLString<T>(this string data) {
         var serializer = new XmlSerializer(typeof(T));
-        using (TextReader reader = new StringReader(data))
-        {
-            var result = (T)serializer.Deserialize(reader);
+        using(TextReader reader = new StringReader(data)) {
+            var result = (T) serializer.Deserialize(reader);
             return result;
         }
     }
-    
+
     public static void SerializeToXML<T>(this T @object, string path) {
         var ser = new XmlSerializer(typeof(T));
         using(var sww = new StringWriter()) {

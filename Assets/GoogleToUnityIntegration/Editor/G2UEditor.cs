@@ -89,13 +89,26 @@ namespace G2U {
                 _g2uConfig.DataLocation = _ex.TextField("Data location", _g2uConfig.DataLocation);
                 _g2uConfig.CommentColumnTitle = _ex.TextField("Comment column title", _g2uConfig.CommentColumnTitle);
                 _g2uConfig.DataExtension = _ex.TextField("Data extension", _g2uConfig.DataExtension);
-                _g2uConfig.SetAccessModifiers = _ex.EnumPopUp("Set accessModifier", "", _g2uConfig.SetAccessModifiers,
-                    true, 145);
-                if(_ex.Foldout("Extensions", "extensionsKey", true)) {
+                _g2uConfig.ArraySeparator = _ex.TextField("Array separator", _g2uConfig.ArraySeparator);
+                AccessModifiers();
+                if (_ex.Foldout("Google sheet data", visualize: true))
+                {
                     ShowGoogleSheetDataControl();
                     DrawGoogleSheetDataList();
                 }
             });
+        }
+
+        private void AccessModifiers() {
+            _g2uConfig.VariableType = _ex.EnumPopUp("Variable Type", null, _g2uConfig.VariableType,
+                true, 145);
+            _g2uConfig.FieldAccessModifiers = _ex.EnumPopUp("Field access modifier", null,
+                _g2uConfig.FieldAccessModifiers,
+                true, 145);
+            if(_g2uConfig.VariableType == VariableType.Property) {
+                _g2uConfig.SetAccessModifiers = _ex.EnumPopUp("Set access modifier", null, _g2uConfig.SetAccessModifiers,
+                    true, 145);
+            }
         }
 
         /// <summary>
@@ -119,16 +132,20 @@ namespace G2U {
         }
 
         private void DrawGoogleSheetDataList() {
-            foreach(var googleSheetData in _g2uConfig.GoogleSheetData) {
-                DrawGoogleSheetData(googleSheetData);
+
+            for(int i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
+                DrawGoogleSheetData(_g2uConfig.GoogleSheetData[i], i);
             }
         }
 
-        private void DrawGoogleSheetData(GoogleSheetData data) {
+        private void DrawGoogleSheetData(GoogleSheetData data, int counter) {
             _ex.DrawVertical(() => {
                 data.GoogleDataName = _ex.TextField("Sheet Name", data.GoogleDataName);
                 data.GoogleDriveFileGuid = _ex.TextField("GoogleDriveFileGuid", data.GoogleDriveFileGuid);
                 data.GoogleDriveSheetGuid = _ex.TextField("GoogleDriveSheetGuid", data.GoogleDriveSheetGuid);
+                _ex.Button("Remove", () => {
+                   _g2uConfig.GoogleSheetData.RemoveAt(counter);
+                });
             }, bgColor: ColorManager.GetColor(), border: true);
         }
 
@@ -168,37 +185,9 @@ namespace G2U {
                         });
                 }, position.width - 200 - _margin, 15);
             });
-            DrawScriptableObjectMenu();
         }
 
-        private void DrawScriptableObjectMenu() {
-//            if (_dataType == DataType.ScriptableObject)
-//            {
-//                _ex.Button("Generate scriptable object asset", () =>
-//                {
-//                    var selections = Selection.objects;
-//                    _g2uConfig.PathManager.CreateDataFolder();
-//                    var directory = _g2uConfig.PathManager.GetDataFolder();
-//                    foreach (var selection in selections)
-//                    {
-//                        MonoScript ms = selection as MonoScript;
-//                        if (ms == null) continue;
-//
-//                        var t = ms.GetClass().BaseType;
-//                        Debug.Log(t);
-//                        ScriptableObject scriptableObject = CreateInstance(ms.GetClass());
-//                        //                        var d = Convert.ChangeType(scriptableObject, t);
-//
-//                        var path = PathManager.GetProjectRelativPath(new FileInfo(Path.Combine(directory.FullName, string.Format("{0}.asset", ms.GetClass().Name))));
-//                        AssetDatabase.CreateAsset(scriptableObject, path);
-//                        AssetDatabase.SaveAssets();
-//                        EditorUtility.FocusProjectWindow();
-//                        Selection.activeObject = scriptableObject;
-//                    }
-//                });
-//            }
-        }
-
+     
         private void GenerateData() {
             var dataFiles = new List<string>();
             var generator = AbstractFileBuilder.GetDataBuilder(_g2uConfig, _dataType);
@@ -217,16 +206,10 @@ namespace G2U {
         }
 
         private DirectoryInfo GetDataDirectory() {
-//            if(_dataType == DataType.ScriptableObject)
-//                return _g2uConfig.PathManager.GetClassFolder();
             return _g2uConfig.PathManager.GetDataFolder();
         }
 
         private string GetDataExtension() {
-//            switch(_dataType) {
-//                case DataType.ScriptableObject:
-//                    return ".cs";
-//            }
             return _g2uConfig.DataExtension;
         }
 
@@ -264,7 +247,7 @@ namespace G2U {
         }
 
         private void GenerateClass() {
-            var generator = AbstractFileBuilder.GetClassBuilder(_g2uConfig);
+            var generator = AbstractFileBuilder.GetClassBuilder(_g2uConfig, _g2uConfig.VariableType);
             if(generator == null) {
                 Debug.LogError("Cannot generate file. File generator is null");
                 return;
