@@ -210,10 +210,13 @@ namespace G2U {
         private readonly VariableType _varibleType;
 
         public ClassBuilder(G2UConfig config, VariableType varibleType)
-            : base(config) { _varibleType = varibleType; }
+            : base(config) {
+            _varibleType = varibleType;
+        }
 
         protected override AbstractDataRow GetRowData(string parameterName, string[] data, string comment) {
-            return new ClassDataRow(parameterName, data, comment, _config.ArraySeparator, _config.FieldAccessModifiers, _config.SetAccessModifiers,
+            return new ClassDataRow(parameterName, data, comment, _config.ArraySeparator, _config.FieldAccessModifiers,
+                _config.SetAccessModifiers,
                 _varibleType);
         }
 
@@ -273,7 +276,7 @@ namespace G2U {
         public bool IsArray { get; set; }
         public string Comment { get; set; }
 
-        public AbstractDataRow(string parameterName, string[] data, string comment, string arraySeparator) {
+        protected AbstractDataRow(string parameterName, string[] data, string comment, string arraySeparator) {
             ParameterName = PathManager.PrepareFileName(parameterName, true);
             Comment = comment;
             if(data.Length == 0) {
@@ -293,7 +296,8 @@ namespace G2U {
     }
 
     public class JSONDataRow : AbstractDataRow {
-        public JSONDataRow(string parameterName, string[] data, string comment, string arraySeparator) : base(parameterName, data, comment, arraySeparator) {}
+        public JSONDataRow(string parameterName, string[] data, string comment, string arraySeparator)
+            : base(parameterName, data, comment, arraySeparator) {}
 
         public override string GetRowString() {
             var sb = new StringBuilder();
@@ -334,7 +338,8 @@ namespace G2U {
     }
 
     public class XMLDataRow : AbstractDataRow {
-        public XMLDataRow(string parameterName, string[] data, string comment, string arraySeparator) : base(parameterName, data, comment, arraySeparator) { }
+        public XMLDataRow(string parameterName, string[] data, string comment, string arraySeparator)
+            : base(parameterName, data, comment, arraySeparator) {}
 
         public override string GetRowString() {
             var sb = new StringBuilder();
@@ -377,7 +382,8 @@ namespace G2U {
         private readonly AccessModifiers _setAccessModifier;
         private readonly VariableType _variableType;
 
-        public ClassDataRow(string parameterName, string[] data, string comment, string arraySeparator, AccessModifiers fieldAccessModifier,AccessModifiers setAccessModifier,
+        public ClassDataRow(string parameterName, string[] data, string comment, string arraySeparator,
+            AccessModifiers fieldAccessModifier, AccessModifiers setAccessModifier,
             VariableType varType)
             : base(parameterName, data, comment, arraySeparator) {
             _fieldAccessModifier = fieldAccessModifier;
