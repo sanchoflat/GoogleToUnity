@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace G2U {
+namespace GoogleSheetIntergation {
     public enum AccessModifiers {
         Public,
         Private,
@@ -44,7 +44,7 @@ namespace G2U {
             get { return ParameterClassLocation + "/" + ParameterClassName + ".cs"; }
         }
 
-        public PathManager PathManager;
+        public PathManager PathManager { get; private set; }
 
         public G2UConfig() {
             PathManager = new PathManager();
@@ -59,7 +59,7 @@ namespace G2U {
                 ParameterClassName = "Param",
                 ParameterClassLocation = "./Assets/Scripts",
                 GoogleSheetData = new List<GoogleSheetData> {
-                    G2U.GoogleSheetData.CreateDefaultData()
+                    GoogleSheetIntergation.GoogleSheetData.CreateDefaultData()
                 },
                 DataExtension = ".txt",
                 ArraySeparator = "|",
@@ -68,7 +68,6 @@ namespace G2U {
         }
 
         public void Inizialize() {
-            PathManager.CreateAllFolders();
             WasInizialized = true;
         }
     }

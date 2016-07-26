@@ -2,7 +2,7 @@
 using System.Text;
 
 
-namespace G2U {
+namespace GoogleSheetIntergation {
     public class PathManager {
         public static FileInfo ConfigFileInfo;
         private const string _classFolderDefault = "./Assets/Scripts/Configs";

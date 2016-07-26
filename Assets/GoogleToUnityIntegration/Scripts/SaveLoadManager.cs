@@ -2,7 +2,7 @@
 using System.IO;
 using UnityEditor;
 
-namespace G2U {
+namespace GoogleSheetIntergation {
     public static class SaveLoadManager {
 
         public static G2UConfig LoadConfig() {

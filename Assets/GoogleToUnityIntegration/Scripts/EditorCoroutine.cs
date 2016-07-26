@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEditor;
 
 
-namespace G2U {
+namespace GoogleSheetIntergation {
     public class EditorCoroutine {
         private static readonly List<Job> jobs = new List<Job>();
 

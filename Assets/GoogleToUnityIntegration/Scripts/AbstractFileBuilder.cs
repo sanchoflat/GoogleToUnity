@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 
-namespace G2U {
+namespace GoogleSheetIntergation {
     public enum DataType {
         JSON,
         XML
@@ -129,6 +129,11 @@ namespace G2U {
             return sb.ToString();
         }
     }
+
+    // ----------------------------------------------
+    // Here you can and your own ...Builder.
+    // You should create AbstractFileBuilder subclass and AbstractDataRow subclass
+    // ----------------------------------------------
 
     public class JsonBuilder : AbstractFileBuilder {
         public JsonBuilder(G2UConfig config) : base(config) {}

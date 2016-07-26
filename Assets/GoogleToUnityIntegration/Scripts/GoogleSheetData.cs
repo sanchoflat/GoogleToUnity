@@ -1,4 +1,4 @@
-﻿namespace G2U {
+﻿namespace GoogleSheetIntergation {
     public enum SheetType {
         Config,
         Localization

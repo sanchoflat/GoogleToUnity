@@ -4,7 +4,7 @@ using System.Linq;
 using UnityEngine;
 
 
-namespace G2U {
+namespace GoogleSheetIntergation {
     public class GoogleSheetLoaderEditor {
         public static List<string> DataFromGoogle;
 

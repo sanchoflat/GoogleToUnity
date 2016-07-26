@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 
-namespace G2U {
+namespace GoogleSheetIntergation {
     public class GoogleDataParser {
         public static List<List<Dictionary<string, string>>> ParsedData;
 

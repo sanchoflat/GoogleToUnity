@@ -4,8 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
-
-namespace G2U {
+namespace GoogleSheetIntergation {
     internal class TypeManager {
         public const string StringType = "string";
         public const string BoolType = "bool";
@@ -71,10 +70,9 @@ namespace G2U {
         }
 
         private static string[] GetArrayString(string data, string arraySeparator) {
-            var parsedData = data.Split(new []{arraySeparator}, StringSplitOptions.None);
+            var parsedData = data.Split(new []{arraySeparator}, StringSplitOptions.None).Select(s => s.Trim()).ToArray();
             return parsedData;
         }
-
 
         private static string GetTypeFromList(List<AbstractDataRow> data) {
             return GetArrayType(data.Select(row => row.ParameterType).ToArray());

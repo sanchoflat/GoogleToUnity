@@ -9,10 +9,9 @@ using EternalMaze.EditorWindows;
 using UnityEditor;
 using UnityEngine;
 
-
-namespace G2U {
+namespace GoogleSheetIntergation {
     [ExecuteInEditMode]
-    public class G2UEditor : EditorWindow {
+    public class GoogleSheetLoader : EditorWindow {
         private readonly Vector2 _minSize = new Vector2(430, 200);
         private readonly int _margin = 15;
 
@@ -20,10 +19,10 @@ namespace G2U {
         private readonly EditorExtension _ex = new EditorExtension();
         private DataType _dataType = DataType.XML;
 
-        [MenuItem("LoadGoogle/Load")]
+        [MenuItem("Tools/Google Sheet Integration")]
         public static void Init() {
             // Get existing open window or if none, make a new one:
-            var window = (G2UEditor) GetWindow(typeof(G2UEditor));
+            var window = (GoogleSheetLoader) GetWindow(typeof(GoogleSheetLoader));
             window.Show();
             _g2uConfig = null;
         }
@@ -111,9 +110,6 @@ namespace G2U {
             }
         }
 
-        /// <summary>
-        ///     Draw buttons to Create/Remove GoogleSheetData
-        /// </summary>
         private void ShowGoogleSheetDataControl() {
             _ex.DrawHorizontal(() => {
                 _ex.Button("+", AddGoogleSheetData);
@@ -132,7 +128,6 @@ namespace G2U {
         }
 
         private void DrawGoogleSheetDataList() {
-
             for(int i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
                 DrawGoogleSheetData(_g2uConfig.GoogleSheetData[i], i);
             }
@@ -155,7 +150,6 @@ namespace G2U {
 
         private void BaseMenu() {
             ShowMainMenu();
-            // draw settings. Here you can reload or save config
             if(_ex.Foldout("Settings", "settingsKey", true)) {
                 SettingsMenu();
                 _ex.Button("Load config", () => { _g2uConfig = SaveLoadManager.LoadConfig(); });
@@ -171,7 +165,7 @@ namespace G2U {
         private void LoadSheetAndGenerateData() {
             _ex.DrawHorizontal(() => {
                 _dataType = _ex.EnumPopUp("Data type", "dataType", _dataType, true, 80, 120);
-                _ex.Button("Load Google Sheets and save it", () => {
+                _ex.Button("Generate data", () => {
                     GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
                         () => {
                             try {
@@ -231,7 +225,7 @@ namespace G2U {
         }
 
         private void LoadSheetAndGenerateClass() {
-            _ex.Button("Load Google Sheets and generate class", () => {
+            _ex.Button("Generate classes", () => {
                 GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
                     () => {
                         try {
@@ -263,6 +257,4 @@ namespace G2U {
         #endregion
     }
 }
-
-
 #endif
