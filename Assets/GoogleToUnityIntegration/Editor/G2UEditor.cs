@@ -9,6 +9,7 @@ using EternalMaze.EditorWindows;
 using UnityEditor;
 using UnityEngine;
 
+
 namespace GoogleSheetIntergation {
     [ExecuteInEditMode]
     public class GoogleSheetLoader : EditorWindow {
@@ -90,8 +91,7 @@ namespace GoogleSheetIntergation {
                 _g2uConfig.DataExtension = _ex.TextField("Data extension", _g2uConfig.DataExtension);
                 _g2uConfig.ArraySeparator = _ex.TextField("Array separator", _g2uConfig.ArraySeparator);
                 AccessModifiers();
-                if (_ex.Foldout("Google sheet data", visualize: true))
-                {
+                if(_ex.Foldout("Google sheet data", visualize: true)) {
                     ShowGoogleSheetDataControl();
                     DrawGoogleSheetDataList();
                 }
@@ -128,7 +128,7 @@ namespace GoogleSheetIntergation {
         }
 
         private void DrawGoogleSheetDataList() {
-            for(int i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
+            for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
                 DrawGoogleSheetData(_g2uConfig.GoogleSheetData[i], i);
             }
         }
@@ -138,9 +138,7 @@ namespace GoogleSheetIntergation {
                 data.GoogleDataName = _ex.TextField("Sheet Name", data.GoogleDataName);
                 data.GoogleDriveFileGuid = _ex.TextField("GoogleDriveFileGuid", data.GoogleDriveFileGuid);
                 data.GoogleDriveSheetGuid = _ex.TextField("GoogleDriveSheetGuid", data.GoogleDriveSheetGuid);
-                _ex.Button("Remove", () => {
-                   _g2uConfig.GoogleSheetData.RemoveAt(counter);
-                });
+                _ex.Button("Remove", () => { _g2uConfig.GoogleSheetData.RemoveAt(counter); });
             }, bgColor: ColorManager.GetColor(), border: true);
         }
 
@@ -159,39 +157,69 @@ namespace GoogleSheetIntergation {
 
         private void ShowMainMenu() {
             LoadSheetAndGenerateData();
-            LoadSheetAndGenerateClass();
+            GenerateClass();
         }
 
         private void LoadSheetAndGenerateData() {
-            _ex.DrawHorizontal(() => {
+            switch(_dataType) {
+                case DataType.ScriptableObject:
+                    GeterateSO();
+                    break;
+                default:
+                    GenerateData();
+                    break;
+            }
+        }
+
+        private void GeterateSO() {
+            _ex.DrawVertical(() => {
                 _dataType = _ex.EnumPopUp("Data type", "dataType", _dataType, true, 80, 120);
-                _ex.Button("Generate data", () => {
-                    GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
-                        () => {
-                            try {
-                                GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-                                    _g2uConfig.GoogleSheetData);
-                                GenerateData();
-                            }
-                            catch(Exception e) {
-                                Debug.LogError(e.Message);
-                            }
-                        });
-                }, position.width - 200 - _margin, 15);
+                _ex.Button("Generate SO class", () => { LoadDataFromGoogle(GenerateSOClass); });
+                _ex.Button("Generate SO prefab", GenerateSOPrefab);
             });
         }
 
-     
-        private void GenerateData() {
-            var dataFiles = new List<string>();
+        private void GenerateSOClass(List<List<Dictionary<string, string>>> inputData) {
+            var generator = GetDataBuilder();
+            _g2uConfig.PathManager.CreateClassFolder();
+            for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
+                var @class = generator.GenerateFileList(inputData[i]);
+                SaveLoadManager.SaveClass(_g2uConfig.PathManager.GetClassFolder(), @class);
+            }
+            Debug.Log("Classes was successful generated");
+        }
+
+        private AbstractFileBuilder GetDataBuilder() {
             var generator = AbstractFileBuilder.GetDataBuilder(_g2uConfig, _dataType);
             if(generator == null) {
-                Debug.LogError("Cannot generate file. File generator is null");
-                return;
+                throw new ArgumentNullException("Cannot generate file. File generator is null");
             }
+            return generator;
+        }
+
+        private void GenerateSOPrefab() {
+            var so = CreateInstance("GameConfig");
+            _g2uConfig.PathManager.CreateDataFolder();
+            AssetDatabase.CreateAsset(so, _g2uConfig.DataLocation.Replace("./", "") + "/GameConfig.asset");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log("Asset was successful generated");
+        }
+
+        private void GenerateData() {
+            _ex.DrawHorizontal(() => {
+                _dataType = _ex.EnumPopUp("Data type", "dataType", _dataType, true, 80, 120);
+                _ex.Button("Generate data", () => { LoadDataFromGoogle(GenerateData); }, position.width - 200 - _margin,
+                    15);
+            });
+        }
+
+        private void GenerateData(List<List<Dictionary<string, string>>> inputData) {
+            var dataFiles = new List<string>();
+            var generator = GetDataBuilder();
             _g2uConfig.PathManager.CreateFolder(GetDataDirectory());
             for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
-                var data = generator.GenerateFileList(GoogleDataParser.ParsedData[i]);
+                var data = generator.GenerateFileList(inputData[i]);
                 SaveLoadManager.SaveData(GetDataDirectory(), GetDataExtension(), data, _dataType);
                 dataFiles.AddRange(data.Select(j => j.Key));
             }
@@ -224,37 +252,78 @@ namespace GoogleSheetIntergation {
             SaveLoadManager.SaveFile(_g2uConfig.ParameterClassFullName, file.ToString());
         }
 
-        private void LoadSheetAndGenerateClass() {
-            _ex.Button("Generate classes", () => {
-                GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
-                    () => {
-                        try {
-                            GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-                                _g2uConfig.GoogleSheetData);
-                            GenerateClass();
-                        }
-                        catch(Exception e) {
-                            Debug.LogError(e.Message);
-                        }
-                    });
-            });
+        private void GenerateClass() {
+            _ex.Button("Generate classes", () => { LoadDataFromGoogle(GenerateClass); });
         }
 
-        private void GenerateClass() {
-            var generator = AbstractFileBuilder.GetClassBuilder(_g2uConfig, _g2uConfig.VariableType);
-            if(generator == null) {
-                Debug.LogError("Cannot generate file. File generator is null");
-                return;
-            }
+        private void GenerateClass(List<List<Dictionary<string, string>>> inputData) {
+            var generator = GetClassBuilder();
             _g2uConfig.PathManager.CreateClassFolder();
             for(var i = 0; i < _g2uConfig.GoogleSheetData.Count; i++) {
-                var @class = generator.GenerateFileList(GoogleDataParser.ParsedData[i]);
+                var @class = generator.GenerateFileList(inputData[i]);
                 SaveLoadManager.SaveClass(_g2uConfig.PathManager.GetClassFolder(), @class);
             }
             Debug.Log("Classes was successful generated");
         }
 
+        private AbstractFileBuilder GetClassBuilder() {
+            var generator = AbstractFileBuilder.GetClassBuilder(_g2uConfig, _g2uConfig.VariableType);
+            if(generator == null) {
+                throw new ArgumentNullException("Cannot generate file. File generator is null");
+            }
+            return generator;
+        }
+
+        private void LoadDataFromGoogle(Action<List<List<Dictionary<string, string>>>> onComplete) {
+            GoogleSheetLoaderEditor.LoadSheet(_g2uConfig.GoogleSheetData,
+                () => {
+                    try {
+                        var data = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
+                            _g2uConfig.GoogleSheetData);
+                        if(onComplete != null) { onComplete.Invoke(data); }
+                    }
+                    catch(Exception e) {
+                        Debug.LogError(e.Message);
+                    }
+                });
+        }
+
         #endregion
     }
 }
+
+
 #endif
+
+//  public static Assembly Compile(string source) {
+//            var provider = new CSharpCodeProvider();
+//            var param = new CompilerParameters();
+//
+//            // Add ALL of the assembly references
+//            foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+//                param.ReferencedAssemblies.Add(assembly.Location);
+//            }
+//
+//            // Add specific assembly references
+//            //param.ReferencedAssemblies.Add("System.dll");
+//            //param.ReferencedAssemblies.Add("CSharp.dll");
+//            //param.ReferencedAssemblies.Add("UnityEngines.dll");
+//
+//            // Generate a dll in memory
+//            param.GenerateExecutable = false;
+//            param.GenerateInMemory = true;
+//
+//            // Compile the source
+//            var result = provider.CompileAssemblyFromSource(param, source);
+//            if(result.Errors.Count > 0) {
+//                var msg = new StringBuilder();
+//                foreach(CompilerError error in result.Errors) {
+//                    msg.AppendFormat("Error ({0}): {1}\n",
+//                        error.ErrorNumber, error.ErrorText);
+//                }
+//                throw new Exception(msg.ToString());
+//            }
+//
+//            // Return the assembly
+//            return result.CompiledAssembly;
+//        }

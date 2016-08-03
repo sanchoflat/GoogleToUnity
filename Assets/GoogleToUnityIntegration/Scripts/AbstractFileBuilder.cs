@@ -7,7 +7,8 @@ using System.Text;
 namespace GoogleSheetIntergation {
     public enum DataType {
         JSON,
-        XML
+        XML,
+        ScriptableObject
     }
 
     public abstract class AbstractFileBuilder {
@@ -27,6 +28,8 @@ namespace GoogleSheetIntergation {
                     return new JsonBuilder(config);
                 case DataType.XML:
                     return new XmlBuilder(config);
+                case DataType.ScriptableObject:
+                    return new ScriptableObjectBuilder(config, VariableType.Field); 
             }
             throw new ArgumentException("Invalid dataType: " + dataType);
         }
@@ -211,8 +214,8 @@ namespace GoogleSheetIntergation {
     }
 
     public class ClassBuilder : AbstractFileBuilder {
-        private string _className;
-        private readonly VariableType _varibleType;
+        protected string _className;
+        protected readonly VariableType _varibleType;
 
         public ClassBuilder(G2UConfig config, VariableType varibleType)
             : base(config) {
@@ -274,6 +277,20 @@ namespace GoogleSheetIntergation {
         }
     }
 
+    public class ScriptableObjectBuilder : ClassBuilder
+    {
+        public ScriptableObjectBuilder(G2UConfig config, VariableType varibleType) : base(config, varibleType) {}
+
+        protected override StringBuilder GetFileStart()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("using UnityEngine;");
+            sb.AppendLine(string.Format("namespace {0} {{", _config.Namespace));
+            sb.AppendLine(string.Format("{0}public class {1} : ScriptableObject{{", GetTabulator(1), _className));
+            return sb;
+        }
+
+    }
     public abstract class AbstractDataRow {
         public string ParameterName { get; set; }
         public string ParameterType { get; set; }
