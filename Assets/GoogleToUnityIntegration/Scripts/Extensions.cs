@@ -15,9 +15,9 @@ using System.Xml.Serialization;
 #endregion
 
 
-namespace System.Runtime.CompilerServices {
-    public class ExtensionAttribute : Attribute {}
-}
+//namespace System.Runtime.CompilerServices {
+//    public class ExtensionAttribute : Attribute {}
+//}
 
 
 public static class Extensions {
