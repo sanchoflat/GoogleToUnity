@@ -1,7 +1,15 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
+using System.Xml;
+using System.Xml.Serialization;
+using G2U;
+using Microsoft.CSharp;
+using UnityEngine;
 
 
 namespace GoogleSheetIntergation {
@@ -34,10 +42,66 @@ namespace GoogleSheetIntergation {
             throw new ArgumentException("Invalid dataType: " + dataType);
         }
 
+
         public Dictionary<string, string> GenerateFileList(List<Dictionary<string, string>> data) {
+            
+            // тут сгенерировали список <имя, список параметров>
             var _parsedFileData = PrepareParsedFileData(data);
             _parsedFileData = TypeManager.UpdateParsedFileData(_parsedFileData);
+
+            bool @continue = false;
+            var ca = AppDomain.CurrentDomain.GetAssemblies();
+            foreach (Assembly asm in ca)
+            {
+                if(asm.GetType("G2U.GameConfig") != null) {
+                    var instance = asm.CreateInstance("G2U.GameConfig");
+                    instance = InitValues(instance, _parsedFileData["gameConfig"]);
+                    Serialize(instance);
+                    @continue = true;
+                }
+            };
+            if(@continue) return null;
+
+
+            // далее собираем класс (текстовое представление)
+            var classBuilder = new ClassBuilder(_config, _config.VariableType);
+            var @class = classBuilder.GenerateFileList(_parsedFileData);
+
+            // далее необходимо сделать сборки из полученных классов
+            var assembly = GetAssemblies(@class);
+            
+            assembly = InitValues(assembly, _parsedFileData);
+
+
+            foreach (var value in assembly.Values)
+            {
+               
+            }
+
+            // после сборки, необходимо создать инстансы сборок
+            // после заполняем их значениями из "списка параметров"
+            // после необходимо сгенерировать файл с данными (сериализация в нужный формат)
             return GenerateFileList(_parsedFileData);
+        }
+
+
+        private void Serialize(object o) {
+            XmlSerializer serial = new XmlSerializer(o.GetType());
+            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            ns.Add("", "");
+            try
+            {
+                using (FileStream fs = new FileStream("./test.xml", FileMode.Create, FileAccess.Write))
+                {
+                    using (XmlTextWriter tw = new XmlTextWriter(fs, Encoding.UTF8))
+                    {
+                        tw.Formatting = Formatting.Indented;
+                        serial.Serialize(tw, o, ns);
+                    }
+
+                }
+            }
+            catch { }
         }
 
         protected Dictionary<string, List<AbstractDataRow>> PrepareParsedFileData(List<Dictionary<string, string>> data) {
@@ -84,8 +148,86 @@ namespace GoogleSheetIntergation {
 
         private bool IsArrayParameter(Dictionary<string, string> nextData, List<string> keyList, string currentKey) {
             return string.IsNullOrEmpty(nextData[keyList[0]]) && !string.IsNullOrEmpty(nextData[currentKey]);
+        }     
+
+        private Dictionary<string, object> GetAssemblies(Dictionary<string, string> input) {
+            var assemblies = new Dictionary<string, object>();
+            foreach(var keyPair in input) {
+
+                var assembly = CompileSource(keyPair.Value);
+                var instance = assembly.CreateInstance("G2U.GameConfig");
+                assemblies.Add(keyPair.Key, instance);
+            }
+            return assemblies;
         }
 
+        private Assembly CompileSource(string source) {
+            var provider = new CSharpCodeProvider();
+            var param = new CompilerParameters();
+
+            // Add ALL of the assembly references
+            foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                param.ReferencedAssemblies.Add(assembly.Location);
+            }
+
+            // Add specific assembly references
+            //param.ReferencedAssemblies.Add("System.dll");
+            //param.ReferencedAssemblies.Add("CSharp.dll");
+            param.ReferencedAssemblies.Add("./Library/UnityAssemblies/UnityEngine.dll");
+
+            // Generate a dll in memory
+            param.GenerateExecutable = false;
+            param.GenerateInMemory = true;
+
+            // Compile the source
+            var result = provider.CompileAssemblyFromSource(param, source);
+            if(result.Errors.Count > 0) {
+                var msg = new StringBuilder();
+                foreach(CompilerError error in result.Errors) {
+                    msg.AppendFormat("Error ({0}): {1}\n",
+                        error.ErrorNumber, error.ErrorText);
+                }
+                throw new Exception(msg.ToString());
+            }
+            return result.CompiledAssembly;
+        }
+
+        private Dictionary<string, object> InitValues(Dictionary<string, object> objects,
+            Dictionary<string, List<AbstractDataRow>> dataList) {
+            var keys = dataList.Keys.ToList();
+            for(int i = 1; i < keys.Count; i++) {
+                objects[keys[0]] = InitValues(objects[keys[0]], dataList[keys[i]]);
+            }
+        
+            return objects;
+        }
+
+        private object InitValues(object @object, List<AbstractDataRow> dataList) {
+            switch(_config.VariableType) {
+                case VariableType.Field:
+                    return InitFields(@object, dataList);
+                case VariableType.Property:
+                    return InitProperty(@object, dataList);
+            }
+            return null;
+        }
+
+        private object InitFields(object @object, List<AbstractDataRow> dataList) {
+            var type = @object.GetType();
+            foreach(var row in dataList) {
+                type.GetField(row.ParameterName).SetValue(@object, row.Data.Data);
+            }
+            return @object;
+        }
+        private object InitProperty(object @object, List<AbstractDataRow> dataList)
+        {
+            var type = @object.GetType();
+            foreach (var row in dataList)
+            {
+                type.GetProperty(row.ParameterName).SetValue(@object, row.Data.Data, null);
+            }
+            return @object;
+        }
         protected abstract AbstractDataRow GetRowData(string parameterName, string[] data, string comment);
 
         protected abstract Dictionary<string, string> GenerateFileList(
@@ -291,10 +433,11 @@ namespace GoogleSheetIntergation {
         }
 
     }
+  
     public abstract class AbstractDataRow {
         public string ParameterName { get; set; }
-        public string ParameterType { get; set; }
-        public string[] Data { get; set; }
+        public Type ParameterType { get; set; }
+        public D Data { get; set; }
         public bool IsArray { get; set; }
         public string Comment { get; set; }
 
@@ -302,18 +445,46 @@ namespace GoogleSheetIntergation {
             ParameterName = PathManager.PrepareFileName(parameterName, true);
             Comment = comment;
             if(data.Length == 0) {
-                ParameterType = "string";
+                ParameterType = typeof(string);
                 return;
             }
             ParameterType = TypeManager.GetPropertyType(ref data, arraySeparator);
-            Data = data;
-            IsArray = data.Length > 1;
+            Data = new D(data, ParameterType);
+          
         }
 
         public abstract string GetRowString();
 
         public override string ToString() {
             return string.Format("Name: {0}, Type: {1}, IsArray: {2}", ParameterName, ParameterType, IsArray);
+        }
+
+
+        public struct D {
+            private readonly object[] data;
+            private bool isArray ;
+            public object Data {
+                get {
+                    if (isArray)
+                        return data;
+                    return data[0];
+                }
+            }
+
+           
+            public D(string[] data, Type t) : this() {
+                isArray = data.Length > 1;
+                this.data = new object[data.Length];
+                if (!isArray)
+                {
+                    this.data[0] = Convert.ChangeType(data[0], t);
+                }
+                else {
+                    for(int i = 0; i < data.Length; i++) {
+                        this.data[i] = Convert.ChangeType(data[i], t);
+                    }
+                }
+            }
         }
     }
 
@@ -332,28 +503,28 @@ namespace GoogleSheetIntergation {
 
         private string GetValueFormat() {
             var sb = new StringBuilder();
-            if(IsArray) {
-                sb.Append("[");
-            }
-            for(var i = 0; i < Data.Length; i++) {
-                sb.Append(GetValueFormat(Data[i], ParameterType));
-                if(i != Data.Length - 1) {
-                    sb.Append(", ");
-                }
-            }
-            if(IsArray) {
-                sb.Append("]");
-            }
+//            if(IsArray) {
+//                sb.Append("[");
+//            }
+//            for(var i = 0; i < Data.Length; i++) {
+//                sb.Append(GetValueFormat(Data[i], ParameterType));
+//                if(i != Data.Length - 1) {
+//                    sb.Append(", ");
+//                }
+//            }
+//            if(IsArray) {
+//                sb.Append("]");
+//            }
             return sb.ToString();
         }
 
-        private string GetValueFormat(string value, string type) {
-            switch(type) {
-                case TypeManager.BoolType:
-                    return value.ToLower();
-                case TypeManager.StringType:
-                    value = value.Replace("\n", "\\n");
-                    return "\"" + value + "\"";
+        private string GetValueFormat(string value, Type type) {
+            if(type == TypeManager.BoolType) {
+                return value.ToLower();
+            }
+            if(type == TypeManager.StringType) {
+                value = value.Replace("\n", "\\n");
+                return "\"" + value + "\"";
             }
             return value;
         }
@@ -373,22 +544,22 @@ namespace GoogleSheetIntergation {
 
         private string GetValueFormat() {
             var sb = new StringBuilder();
-            var addTypeTag = IsArray;
-            for(var i = 0; i < Data.Length; i++) {
-                if(addTypeTag) {
-                    sb.Append(GetOpenTag(ParameterType));
-                }
-                sb.Append(GetType(i));
-                if(addTypeTag) {
-                    sb.Append(GetCloseTag(ParameterType));
-                }
-            }
+//            var addTypeTag = IsArray;
+//            for(var i = 0; i < Data.Length; i++) {
+//                if(addTypeTag) {
+//                    sb.Append(GetOpenTag(ParameterType.ToString()));
+//                }
+//                sb.Append(GetType(i));
+//                if(addTypeTag) {
+//                    sb.Append(GetCloseTag(ParameterType.ToString()));
+//                }
+//            }
             return sb.ToString();
         }
-
-        private string GetType(int counter) {
-            return ParameterType == TypeManager.BoolType ? Data[counter].ToLower() : Data[counter];
-        }
+//
+//        private string GetType(int counter) {
+//            return ParameterType == TypeManager.BoolType ? Data[counter].ToLower() : Data[counter];
+//        }
 
         private string GetOpenTag(string par) {
             return "<" + par + ">";
@@ -417,7 +588,9 @@ namespace GoogleSheetIntergation {
             var sb = new StringBuilder();
             sb.Append(GetCommentData(Comment, AbstractFileBuilder.GetTabulator(2)));
             sb.Append(AbstractFileBuilder.GetTabulator(2));
-            sb.Append(string.Format("{0} {1}{2}", GetFieldAccessModifier(), ParameterType, (IsArray ? "[]" : "")));
+
+         
+            sb.Append(string.Format("{0} {1}{2}", GetFieldAccessModifier(), ParameterType, (IsArray? "[]" : "")));
             sb.Append(string.Format(" {0}", ParameterName));
             if(_variableType == VariableType.Property) {
                 sb.Append(string.Format(" {{ get; {0}set; }}\r\n", GetSetAccessModifier()));
@@ -458,4 +631,5 @@ namespace GoogleSheetIntergation {
             return sb.ToString();
         }
     }
+
 }

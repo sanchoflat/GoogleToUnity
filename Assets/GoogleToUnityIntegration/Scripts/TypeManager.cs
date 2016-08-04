@@ -6,11 +6,11 @@ using System.Text;
 
 namespace GoogleSheetIntergation {
     internal class TypeManager {
-        public const string StringType = "string";
-        public const string BoolType = "bool";
-        public const string IntType = "int";
-        public const string LongType = "long";
-        public const string FloatType = "float";
+        public static Type StringType = typeof(string);
+        public static Type BoolType = typeof(bool);
+        public static Type IntType = typeof(int);
+        public static Type LongType = typeof(long);
+        public static Type FloatType = typeof(float);
 
         public static Dictionary<string, List<AbstractDataRow>> UpdateParsedFileData(
             Dictionary<string, List<AbstractDataRow>> data) {
@@ -30,7 +30,7 @@ namespace GoogleSheetIntergation {
                     convertedData[i][j - 1] = value;
                 }
             }
-            var types = new List<string>();
+            var types = new List<Type>();
             var isArray = new List<bool>();
             for(var i = 0; i < recordsCount; i++) {
                 types.Add(GetTypeFromList(convertedData[i]));
@@ -46,7 +46,7 @@ namespace GoogleSheetIntergation {
             return data;
         }
 
-        public static string GetPropertyType(ref string[] data, string arraySeparator) {
+        public static Type GetPropertyType(ref string[] data, string arraySeparator) {
             if(data.Length == 1) {
                 var arr = GetArrayString(data[0], arraySeparator);
                 if(arr.Length == 1) {
@@ -62,7 +62,7 @@ namespace GoogleSheetIntergation {
             }
 
             data = list.ToArray();
-            var types = new string[data.Length];
+            var types = new Type[data.Length];
             for(var i = 0; i < types.Length; i++) {
                 types[i] = GetPropertyType(data[i]);
             }
@@ -74,7 +74,7 @@ namespace GoogleSheetIntergation {
             return parsedData;
         }
 
-        private static string GetTypeFromList(List<AbstractDataRow> data) {
+        private static Type GetTypeFromList(List<AbstractDataRow> data) {
             return GetArrayType(data.Select(row => row.ParameterType).ToArray());
         }
 
@@ -84,7 +84,7 @@ namespace GoogleSheetIntergation {
 
         #region Get Property type
 
-        private static string GetPropertyType(string data) {
+        private static Type GetPropertyType(string data) {
             var str = data;
             if(CheckForBool(str)) {
                 return BoolType;
@@ -132,7 +132,7 @@ namespace GoogleSheetIntergation {
             return false;
         }
 
-        private static string GetArrayType(string[] arr) {
+        private static Type GetArrayType(Type[] arr) {
             if(arr.Any(s => s == StringType)) { return StringType; }
             if(arr.All(s => s == BoolType)) { return BoolType; }
             if(arr.All(s => s == IntType)) { return IntType; }
@@ -142,7 +142,7 @@ namespace GoogleSheetIntergation {
             throw new Exception("Cannot compute array type. Please check sheet data.\n" + GetErrorData(arr));
         }
 
-        private static string GetErrorData(string[] types) {
+        private static string GetErrorData(Type[] types) {
             var sb = new StringBuilder();
             for(var i = 0; i < types.Length; i++) {
                 sb.Append(types[i] + "  ");

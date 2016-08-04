@@ -53,7 +53,7 @@ namespace GoogleSheetIntergation {
         public static G2UConfig CreateDefault() {
             return new G2UConfig {
                 WasInizialized = false,
-                Namespace = "G2U",
+                Namespace = "GoogleSheetIntergation",
                 SkipRowPrefix = "__",
                 CommentColumnTitle = "Comment",
                 ParameterClassName = "Param",

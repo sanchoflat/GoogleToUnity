@@ -1,11 +1,14 @@
 ﻿#if UNITY_EDITOR
 using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using Assets.GoogleToUnityIntegration.Scripts;
 using EternalMaze.EditorWindows;
+using Microsoft.CSharp;
 using UnityEditor;
 using UnityEngine;
 
@@ -197,7 +200,8 @@ namespace GoogleSheetIntergation {
             return generator;
         }
 
-        private void GenerateSOPrefab() {
+        private void GenerateSOPrefab()
+        {
             var so = CreateInstance("GameConfig");
             _g2uConfig.PathManager.CreateDataFolder();
             AssetDatabase.CreateAsset(so, _g2uConfig.DataLocation.Replace("./", "") + "/GameConfig.asset");
@@ -289,6 +293,7 @@ namespace GoogleSheetIntergation {
         }
 
         #endregion
+
     }
 }
 
