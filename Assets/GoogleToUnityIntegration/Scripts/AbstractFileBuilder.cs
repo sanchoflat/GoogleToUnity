@@ -204,6 +204,7 @@ namespace GoogleSheetIntergation {
             var sb = new StringBuilder();
             sb.Append(GetFileStart());
             sb.Append(GetFileData(data));
+            sb.Append(GenerateLoadingMethods(data));
             sb.Append(GetFileEnd());
             return sb.ToString();
         }
@@ -213,7 +214,6 @@ namespace GoogleSheetIntergation {
             for(var i = 0; i < data.Count; i++) {
                 sb.Append(data[i].GetRowString());
             }
-//            sb.Append(GenerateLoadingClass());
             return sb;
         }
 
@@ -235,26 +235,74 @@ namespace GoogleSheetIntergation {
             return sb;
         }
 
-        private string GenerateLoadingClass() {
-            var sb = new StringBuilder();
-            sb.Append("\r\n");
-            sb.AppendLine(string.Format("{0}public static {1} Load{1}(string path) {{",
-                ClassGenerator.ClassGenerator.GetTabulator(2), _className));
-            sb.AppendLine(string.Format("{0}var configAsset = Resources.Load(path) as TextAsset;",
-                ClassGenerator.ClassGenerator.GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}var configText = configAsset.text;",
-                ClassGenerator.ClassGenerator.GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}if(string.IsNullOrEmpty(configText)) return null;",
-                ClassGenerator.ClassGenerator.GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}// You can change deserialize function below",
-                ClassGenerator.ClassGenerator.GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}var config = configText.DeserializeFromXMLString<{1}>();",
-                ClassGenerator.ClassGenerator.GetTabulator(3),
-                _className));
-            sb.AppendLine(string.Format("{0}return config;", ClassGenerator.ClassGenerator.GetTabulator(3)));
-            sb.AppendLine(string.Format("{0}}}", ClassGenerator.ClassGenerator.GetTabulator(2)));
+        private string GenerateLoadingMethods(List<AbstractDataRow> data)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(GenerateLoadingClass("GetStringByName",
+                row => !row.IsArray && row.ParameterType == typeof(string), typeof(string), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetIntByName",
+                row => !row.IsArray && row.ParameterType == typeof(int), typeof(int), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetFloatByName",
+                row => !row.IsArray && row.ParameterType == typeof(float), typeof(float), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetLongByName",
+                row => !row.IsArray && row.ParameterType == typeof(long), typeof(long), data));
+
             return sb.ToString();
         }
+
+        private string GenerateLoadingClass(string methodName, Func<AbstractDataRow, bool> isValid, Type returnType, List<AbstractDataRow> data) {
+
+            if(!data.Any(isValid)) return "";
+            var sb = new StringBuilder(); 
+            sb.Append("\r\n");
+            sb.AppendLine(string.Format("{0}public {1} {2}(string name) {{",
+                ClassGenerator.ClassGenerator.GetTabulator(2), returnType, methodName));
+            
+            sb.AppendLine(ClassGenerator.ClassGenerator.GetTabulator(3) + "switch(name){");
+            
+            for(int i = 0; i < data.Count; i++) {
+                if (!isValid(data[i])) continue;
+                sb.AppendLine(String.Format("{0}case \"{1}\":", ClassGenerator.ClassGenerator.GetTabulator(4), data[i].ParameterName));
+                sb.AppendLine(String.Format("{0}return {1};", ClassGenerator.ClassGenerator.GetTabulator(5), data[i].ParameterName));
+            }
+            sb.AppendLine(ClassGenerator.ClassGenerator.GetTabulator(3) + "}");
+            sb.AppendLine(string.Format("{0}return {1};", ClassGenerator.ClassGenerator.GetTabulator(3), GetDefault(returnType)));
+            sb.AppendLine(ClassGenerator.ClassGenerator.GetTabulator(2) + "}");
+            return sb.ToString();
+        }
+
+        public static string GetDefault(Type type)
+        {
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type).ToString();
+            }
+            return "null";
+        }
+
+//        private string GenerateLoadingClass() {
+//            var sb = new StringBuilder();
+//            sb.Append("\r\n");
+//            sb.AppendLine(string.Format("{0}public static {1} Load{1}(string path) {{",
+//                ClassGenerator.ClassGenerator.GetTabulator(2), _className));
+//            sb.AppendLine(string.Format("{0}var configAsset = Resources.Load(path) as TextAsset;",
+//                ClassGenerator.ClassGenerator.GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}var configText = configAsset.text;",
+//                ClassGenerator.ClassGenerator.GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}if(string.IsNullOrEmpty(configText)) return null;",
+//                ClassGenerator.ClassGenerator.GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}// You can change deserialize function below",
+//                ClassGenerator.ClassGenerator.GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}var config = configText.DeserializeFromXMLString<{1}>();",
+//                ClassGenerator.ClassGenerator.GetTabulator(3),
+//                _className));
+//            sb.AppendLine(string.Format("{0}return config;", ClassGenerator.ClassGenerator.GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}}}", ClassGenerator.ClassGenerator.GetTabulator(2)));
+//            return sb.ToString();
+//        }
 
         public virtual AbstractDataRow GetRowData(string parameterName, string[] data, string comment) {
             return new ClassDataRow(parameterName, data, comment, G2UConfig.Instance.ArraySeparator, _googleData.FieldAccessModifiers,
