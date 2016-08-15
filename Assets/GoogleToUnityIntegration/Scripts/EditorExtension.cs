@@ -192,7 +192,18 @@ namespace EternalMaze.EditorWindows {
             return _popUP[id];
         }
 
-        public T EnumPopUp<T>(string text, string id, T defaultValue, bool visualize = false,
+        public T EnumPopUp<T>(string text, T defaultValue, bool visualize = true,
+          float textWidth = 100, float enumWidth = 100)
+          where T : struct, IConvertible {
+            return EnumPopUp<T>(text, text, defaultValue, visualize, textWidth, enumWidth);
+        }
+
+        public void SetEnumPopUpValue<T>(string id, T value) {
+            _enumPopup[id] = value.ToString();
+        }
+
+
+        public T EnumPopUp<T>(string text, string id, T defaultValue, bool visualize = true,
             float textWidth = 100, float enumWidth = 100)
             where T : struct, IConvertible {
             if(id == null) {

@@ -15,6 +15,7 @@ namespace GoogleSheetIntergation {
 
         public static void SaveConfig(G2UConfig config) {
             var path = PathManager.ConfigFileInfo.FullName;
+            config.PathManager.CreateConfigFolder();
             config.SerializeToXML(path);
         }
 
@@ -23,6 +24,10 @@ namespace GoogleSheetIntergation {
                 var p = Path.Combine(directory.FullName, d.Key + ".cs");
                 SaveFile(p, @d.Value);
             }
+        }
+        public static void SaveClass(DirectoryInfo directory, string className, string @class) {
+            var p = Path.Combine(directory.FullName, className + ".cs");
+            SaveFile(p, @class); 
         }
 
         public static void SaveData(DirectoryInfo directory, string extension, Dictionary<string, string> data,

@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
+
 namespace GoogleSheetIntergation {
     internal class TypeManager {
         public static Type StringType = typeof(string);
@@ -12,7 +13,22 @@ namespace GoogleSheetIntergation {
         public static Type LongType = typeof(long);
         public static Type FloatType = typeof(float);
 
-        public static Dictionary<string, List<AbstractDataRow>> UpdateParsedFileData(
+        public static Type StringArrayType = typeof(string[]);
+        public static Type BoolArrayType = typeof(bool[]);
+        public static Type IntArrayType = typeof(int[]);
+        public static Type LongArrayType = typeof(long[]);
+        public static Type FloatArrayType = typeof(float[]);
+
+        public static List<Dictionary<string, List<AbstractDataRow>>> UpdateTypes(
+            List<Dictionary<string, List<AbstractDataRow>>> data) {
+            var list = new List<Dictionary<string, List<AbstractDataRow>>>();
+            foreach(var d in data) {
+                list.Add(UpdateTypes(d));
+            }
+            return list;
+        }
+
+        public static Dictionary<string, List<AbstractDataRow>> UpdateTypes(
             Dictionary<string, List<AbstractDataRow>> data) {
             var convertedData = new List<List<AbstractDataRow>>();
             var recordsCount = data.ElementAt(1).Value.Count;
@@ -32,9 +48,11 @@ namespace GoogleSheetIntergation {
             }
             var types = new List<Type>();
             var isArray = new List<bool>();
-            for(var i = 0; i < recordsCount; i++) {
-                types.Add(GetTypeFromList(convertedData[i]));
+            for (var i = 0; i < recordsCount; i++)
+            {
                 isArray.Add(IsArray(convertedData[i]));
+                types.Add(GetTypeFromList(convertedData[i], false));
+                
             }
             foreach(var d in data) {
                 if(d.Value == null) { continue; }
@@ -46,36 +64,48 @@ namespace GoogleSheetIntergation {
             return data;
         }
 
-        public static Type GetPropertyType(ref string[] data, string arraySeparator) {
-            if(data.Length == 1) {
-                var arr = GetArrayString(data[0], arraySeparator);
-                if(arr.Length == 1) {
-                    return GetPropertyType(data[0]);
-                }
-                data = arr;
-            }
-
+        public static string[] PrepareArrayData(string[] data, string arraySeparator)
+        {
             var list = new List<string>();
-            for (int i = 0; i < data.Length; i++) {
-                var tmpArr = GetArrayString(data[i], arraySeparator);
-                list.AddRange(tmpArr);
+            for(int i = 0; i < data.Length; i++) {
+                list.AddRange(GetArrayString(data[i], arraySeparator));
             }
+            return list.ToArray();
+        }
 
-            data = list.ToArray();
+        public static Type GetPropertyType(string[] data) {
+            if(data.Length == 1) {
+                return GetPropertyType(data[0]);
+            }
             var types = new Type[data.Length];
             for(var i = 0; i < types.Length; i++) {
                 types[i] = GetPropertyType(data[i]);
             }
-            return GetArrayType(types);
+            return GetArrayType(types, false);
+//                var arr = GetArrayString(data[0], arraySeparator);
+//                if(arr.Length == 1) {
+                    
+//                }
+//                data = arr;
+            
+
+            // значит у нас массив
+//            var list = new List<string>();
+//            for(var i = 0; i < data.Length; i++) {
+//                var tmpArr = GetArrayString(data[i], arraySeparator);
+//                list.AddRange(tmpArr);
+//            }
+//            data = list.ToArray();
+            
         }
 
         private static string[] GetArrayString(string data, string arraySeparator) {
-            var parsedData = data.Split(new []{arraySeparator}, StringSplitOptions.None).Select(s => s.Trim()).ToArray();
+            var parsedData = data.Split(new[] {arraySeparator}, StringSplitOptions.None).Select(s => s.Trim()).ToArray();
             return parsedData;
         }
 
-        private static Type GetTypeFromList(List<AbstractDataRow> data) {
-            return GetArrayType(data.Select(row => row.ParameterType).ToArray());
+        private static Type GetTypeFromList(List<AbstractDataRow> data, bool array) {
+            return GetArrayType(data.Select(row => row.ParameterType).ToArray(), array);
         }
 
         private static bool IsArray(List<AbstractDataRow> data) {
@@ -84,7 +114,7 @@ namespace GoogleSheetIntergation {
 
         #region Get Property type
 
-        private static Type GetPropertyType(string data) {
+        public static Type GetPropertyType(string data) {
             var str = data;
             if(CheckForBool(str)) {
                 return BoolType;
@@ -132,13 +162,13 @@ namespace GoogleSheetIntergation {
             return false;
         }
 
-        private static Type GetArrayType(Type[] arr) {
-            if(arr.Any(s => s == StringType)) { return StringType; }
-            if(arr.All(s => s == BoolType)) { return BoolType; }
-            if(arr.All(s => s == IntType)) { return IntType; }
-            if(arr.All(s => s == IntType || s == LongType)) { return LongType; }
-            if(arr.All(s => s == IntType || s == FloatType)) { return FloatType; }
-            if(arr.All(s => s == FloatType || s == LongType || s == IntType)) { return FloatType; }
+        private static Type GetArrayType(Type[] arr, bool array) {
+            if(arr.Any(s => s == StringType)) { return array ? StringArrayType : StringType; }
+            if (arr.All(s => s == BoolType)) { return array ? BoolArrayType : BoolType; }
+            if (arr.All(s => s == IntType)) { return array ? IntArrayType : IntType; }
+            if (arr.All(s => s == IntType || s == LongType)) { return array ? LongArrayType : LongType; }
+            if (arr.All(s => s == IntType || s == FloatType)) { return array ? FloatArrayType : FloatType; }
+            if (arr.All(s => s == FloatType || s == LongType || s == IntType)) { return array ? FloatArrayType : FloatType; }
             throw new Exception("Cannot compute array type. Please check sheet data.\n" + GetErrorData(arr));
         }
 

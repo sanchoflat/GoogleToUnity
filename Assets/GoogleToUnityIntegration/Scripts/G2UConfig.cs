@@ -1,24 +1,25 @@
 ﻿using System.Collections.Generic;
 
 namespace GoogleSheetIntergation {
-    public enum AccessModifiers {
-        Public,
-        Private,
-        Protected
-    }
+
 
     public class G2UConfig {
+
+        public static G2UConfig Instance {
+            get {
+                if (_instance == null) _instance = CreateDefault();
+                return _instance;
+            }
+        }
+
+        private static G2UConfig _instance;
+
         public List<GoogleSheetData> GoogleSheetData { get; set; }
         public bool WasInizialized { get; set; }
-        public string Namespace { get; set; }
         public string SkipRowPrefix { get; set; }
         public string CommentColumnTitle { get; set; }
-        public string DataExtension { get; set; }
         public string ArraySeparator { get; set; }
 
-        public VariableType VariableType { get; set; }
-        public AccessModifiers SetAccessModifiers { get; set; }
-        public AccessModifiers FieldAccessModifiers { get; set; }
 
         public string ParameterClassName {
             get { return PathManager.ParamClassName; }
@@ -31,8 +32,8 @@ namespace GoogleSheetIntergation {
         }
 
         public string ClassLocation {
-            get { return PathManager.ClassFolderCurrent; }
-            set { PathManager.ClassFolderCurrent = value; }
+            get { return PathManager.ClassLocation; }
+            set { PathManager.ClassLocation = value; }
         }
 
         public string DataLocation {
@@ -50,10 +51,25 @@ namespace GoogleSheetIntergation {
             PathManager = new PathManager();
         }
 
-        public static G2UConfig CreateDefault() {
+        public bool LoadConfig() {
+            var config = SaveLoadManager.LoadConfig();
+            if(config == null) return false;
+            WasInizialized = config.WasInizialized;
+            GoogleSheetData = config.GoogleSheetData;
+            SkipRowPrefix = config.SkipRowPrefix;
+            CommentColumnTitle = config.CommentColumnTitle;
+            ArraySeparator = config.ArraySeparator;
+            return true;
+        }
+        public void SaveConfig()
+        {
+             SaveLoadManager.SaveConfig(this);
+        }
+
+        private static G2UConfig CreateDefault() {
+         
             return new G2UConfig {
                 WasInizialized = false,
-                Namespace = "GoogleSheetIntergation",
                 SkipRowPrefix = "__",
                 CommentColumnTitle = "Comment",
                 ParameterClassName = "Param",
@@ -61,12 +77,10 @@ namespace GoogleSheetIntergation {
                 GoogleSheetData = new List<GoogleSheetData> {
                     GoogleSheetIntergation.GoogleSheetData.CreateDefaultData()
                 },
-                DataExtension = ".txt",
                 ArraySeparator = "|",
-                SetAccessModifiers = AccessModifiers.Public
             };
         }
-
+        
         public void Inizialize() {
             WasInizialized = true;
         }

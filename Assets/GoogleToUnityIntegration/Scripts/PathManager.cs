@@ -7,9 +7,9 @@ namespace GoogleSheetIntergation {
         public static FileInfo ConfigFileInfo;
         private const string _classFolderDefault = "./Assets/Scripts/Configs";
         private const string _dataFolderDefault = "./Assets/Resources/Configs";
-        private const string _paramFolderDefault = "./Assets/Scripts/Game/";
+        private const string _paramFolderDefault = "./Assets/Scripts/Game";
 
-        public string ClassFolderCurrent { get; set; }
+        public string ClassLocation { get; set; }
         public string DataLocation { get; set; }
         public string ParamLocation { get; set; }
         public string ParamClassName { get; set; }
@@ -19,7 +19,7 @@ namespace GoogleSheetIntergation {
         }
 
         public PathManager() {
-            ClassFolderCurrent = _classFolderDefault;
+            ClassLocation = _classFolderDefault;
             DataLocation = _dataFolderDefault;
             ParamLocation = _paramFolderDefault;
         }
@@ -29,12 +29,33 @@ namespace GoogleSheetIntergation {
         }
 
         public DirectoryInfo GetClassFolder() {
-            return new DirectoryInfo(ClassFolderCurrent);
+            return new DirectoryInfo(ClassLocation);
         }
 
         public DirectoryInfo GetParamFolder() {
             return new DirectoryInfo(ParamLocation);
         }
+
+
+        public string GetDataPath(string fileName, string extension) {
+            return string.Format("{0}/{1}.{2}", DataLocation, fileName, extension.Replace(".", ""));
+        }
+
+        public string GetClassPath(string fileName)
+        {
+            return string.Format("{0}/{1}.cs", ClassLocation, fileName);
+        }
+
+        public string GetParamPath()
+        {
+            return GetParamPath(ParamClassName);
+        }
+
+        public string GetParamPath(string fileName)
+        {
+            return string.Format("{0}/{1}.cs", ParamLocation, fileName);
+        }
+
 
         public void CreateAllFolders() {
             CreateConfigFolder();
