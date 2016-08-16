@@ -21,13 +21,7 @@ namespace GoogleSheetIntergation {
 
         public static Dictionary<string, List<AbstractDataRow>> ParseSheet(string sheet, out string name,
             GoogleSheetData googleSheetData) {
-            try {
                 return CSVReader.Read(sheet, out name, googleSheetData);
-            }
-            catch {
-                throw new ArgumentException(
-                    "Произошла ошибка при парсинге строки. Попробуй проверить путь или доступ к таблице: " + sheet);
-            }
         }
     }
 }

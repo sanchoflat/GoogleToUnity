@@ -62,7 +62,15 @@ public class CSVReader {
             for(var row = 0; row < data.Count; row++) {
                 var currentData = data[row];
                 var rowName = data[row][keys[0]];
+               
                 if(SkipRow(rowName, currentData[columnName])) { continue; }
+                if(rowName.Contains(G2UConfig.Instance.SkipRowPrefix)) {
+                    if(dictionaryData[columnName].Any()) {
+                        dictionaryData[columnName].Add(new SpaceDataRow(rowName));
+                    }
+                    continue;
+                }
+
                 var dataList = new List<string>();
                 dataList.Add(currentData[columnName]);
                 Dictionary<string, string> nextData = null;
@@ -106,7 +114,6 @@ public class CSVReader {
     }
 
     protected static bool SkipRow(string rowName, string currentData) {
-        if(rowName.Contains(G2UConfig.Instance.SkipRowPrefix)) { return true; }
         return string.IsNullOrEmpty(rowName) && string.IsNullOrEmpty(currentData);
     }
 

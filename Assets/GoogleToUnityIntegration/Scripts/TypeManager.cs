@@ -48,17 +48,21 @@ namespace GoogleSheetIntergation {
             }
             var types = new List<Type>();
             var isArray = new List<bool>();
-            for (var i = 0; i < recordsCount; i++)
+            for (int i = 0, j = 0; i < recordsCount; i++)
             {
+                if (convertedData[i][0].SkipDataRow()) continue;
                 isArray.Add(IsArray(convertedData[i]));
                 types.Add(GetTypeFromList(convertedData[i], false));
-                
+                j++;
+
             }
             foreach(var d in data) {
                 if(d.Value == null) { continue; }
-                for(var i = 0; i < recordsCount; i++) {
-                    d.Value[i].ParameterType = types[i];
-                    d.Value[i].IsArray = isArray[i];
+                for(int i = 0, j = 0; i < recordsCount; i++) {
+                    if(d.Value[i].SkipDataRow()) continue;
+                    d.Value[i].ParameterType = types[j];
+                    d.Value[i].IsArray = isArray[j];
+                    j++;
                 }
             }
             return data;

@@ -59,5 +59,22 @@
             return new GoogleSheetData("", "", "", ".xml", "GoogleSheetIntergation", DataType.XML, VariableType.Field,
                 AccessModifiers.Private, AccessModifiers.Public);
         }
+
+
+        public GoogleSheetData Clone() {
+            var newData = new GoogleSheetData() {
+                VariableType = VariableType,
+                DataType = DataType,
+                Namespace = Namespace,
+                SetAccessModifiers = SetAccessModifiers,
+                FieldAccessModifiers = FieldAccessModifiers,
+                DataExtension = DataExtension,
+                GoogleDriveSheetGuid = "",
+                GoogleDataName = "",
+                GoogleDriveFileGuid = GoogleDriveFileGuid
+            };
+            return newData;
+
+        }
     }
 }

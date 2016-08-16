@@ -11,6 +11,7 @@
 using System.IO;
 using System.Xml;
 using System.Xml.Serialization;
+using GoogleSheetIntergation;
 
 #endregion
 
@@ -53,5 +54,9 @@ public static class Extensions {
                 File.WriteAllText(path, xml);
             }
         }
+    }
+
+    public static bool SkipDataRow(this AbstractDataRow dataRow) {
+        return dataRow.DataRowType == FileBuilder.DataRowType.Space;
     }
 }
