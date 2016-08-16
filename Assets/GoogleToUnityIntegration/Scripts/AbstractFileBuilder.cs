@@ -461,9 +461,9 @@ namespace GoogleSheetIntergation {
 
         public override string GetRowString() {
             if(string.IsNullOrEmpty(_header)) {
-                return string.Format("{0}[Space({1})]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize);
+                return string.Format("\n{0}[Space({1})]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize);
             }
-            return string.Format("{0}[Space({1}, order = 1), Header(\"{2}\", order = 2)]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize, _header);
+            return string.Format("\n{0}[Space({1}, order = 1), Header(\"{2}\", order = 2)]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize, _header);
         }
     }
 
