@@ -15,7 +15,7 @@ namespace GoogleSheetIntergation {
         public string ParamClassName { get; set; }
 
         static PathManager() {
-            ConfigFileInfo = new FileInfo("./Assets/GoogleToUnityIntegration/Config/g2uconfig.txt");
+            ConfigFileInfo = new FileInfo("./Assets/Editor/GoogleToUnityIntegration/Config/g2uconfig.txt");
         }
 
         public PathManager() {
