@@ -95,7 +95,7 @@ namespace GoogleSheetIntergation {
             if(result.Errors.Count > 0) {
                 var msg = new StringBuilder();
                 foreach(CompilerError error in result.Errors) {
-                    msg.AppendFormat("Error ({0}): {1}\n",
+                    msg.AppendFormat("Error ({0}): {1}\r\n",
                         error.ErrorNumber, error.ErrorText);
                 }
                 throw new Exception(msg.ToString());
@@ -315,11 +315,6 @@ namespace GoogleSheetIntergation {
 //            return sb.ToString();
 //        }
 
-        public virtual AbstractDataRow GetRowData(string parameterName, string[] data, string comment) {
-            return new ClassDataRow(parameterName, data, comment, G2UConfig.Instance.ArraySeparator, _googleData.FieldAccessModifiers,
-                _googleData.SetAccessModifiers,
-                _varibleType);
-        }
     }
 
     public class ScriptableObjectBuilder : ClassBuilder {
@@ -337,17 +332,19 @@ namespace GoogleSheetIntergation {
 
     public abstract class AbstractDataRow {
         public abstract FileBuilder.DataRowType DataRowType { get; }
-          
+        protected readonly DataType _dataType;
         public string ParameterName { get; set; }
         public Type ParameterType { get; set; }
         public string[] Data { get; set; }
         public bool IsArray { get; set; }
         public string Comment { get; set; }
 
-        protected AbstractDataRow(string parameterName, string[] data, string comment, string arraySeparator) {
+        protected AbstractDataRow(string parameterName, string[] data, string comment, string arraySeparator, DataType dataType)
+        {
             if(parameterName == null) return;
             ParameterName = PathManager.PrepareFileName(parameterName, true);
             Comment = comment;
+            _dataType = dataType;
             if(data.Length == 0) {
                 ParameterType = typeof(string);
                 return;
@@ -394,8 +391,9 @@ namespace GoogleSheetIntergation {
 
         public ClassDataRow(string parameterName, string[] data, string comment, string arraySeparator,
             AccessModifiers fieldAccessModifier, AccessModifiers setAccessModifier,
-            VariableType varType)
-            : base(parameterName, data, comment, arraySeparator) {
+            VariableType varType, DataType dataType)
+            : base(parameterName, data, comment, arraySeparator, dataType)
+        {
             _fieldAccessModifier = fieldAccessModifier;
             _setAccessModifier = setAccessModifier;
             _variableType = varType;
@@ -404,6 +402,7 @@ namespace GoogleSheetIntergation {
         public override string GetRowString() {
             var sb = new StringBuilder();
             sb.Append(GetCommentData(Comment, ClassGenerator.ClassGenerator.GetTabulator(2)));
+            sb.Append(GetTooltip(Comment));
             sb.Append(ClassGenerator.ClassGenerator.GetTabulator(2));
             sb.Append(string.Format("{0} {1}{2}", GetFieldAccessModifier(), ParameterType, (IsArray ? "[]" : "")));
             sb.Append(string.Format(" {0}", ParameterName));
@@ -414,6 +413,11 @@ namespace GoogleSheetIntergation {
                 sb.Append(";\r\n");
             }
             return sb.ToString();
+        }
+
+        private string GetTooltip(string comment) {
+            if(string.IsNullOrEmpty(comment) || _dataType != DataType.ScriptableObject) return "";
+            return string.Format("[Tooltip(\"{0}\")]", comment);
         }
 
         private string GetSetAccessModifier() {
@@ -454,16 +458,16 @@ namespace GoogleSheetIntergation {
 
         private readonly string _header;
         private const int SpaceSize = 10;
-        public SpaceDataRow(string name) : base(null, null, null, null) {
+        public SpaceDataRow(string name) : base(null, null, null, null, DataType.Binary) {
             _header = name.Replace(G2UConfig.Instance.SkipRowPrefix, "");
         }
 
 
         public override string GetRowString() {
             if(string.IsNullOrEmpty(_header)) {
-                return string.Format("\n{0}[Space({1})]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize);
+                return string.Format("\r\n{0}[Space({1})]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize);
             }
-            return string.Format("\n{0}[Space({1}, order = 1), Header(\"{2}\", order = 2)]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize, _header);
+            return string.Format("\r\n{0}[Space({1}, order = 1), Header(\"{2}\", order = 2)]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize, _header);
         }
     }
 

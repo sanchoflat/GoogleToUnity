@@ -14,8 +14,6 @@ namespace GoogleSheetIntergation {
     [ExecuteInEditMode]
     public class GoogleSheetLoader : EditorWindow {
         private readonly Vector2 _minSize = new Vector2(430, 200);
-        private readonly int _margin = 15;
-
         private readonly EditorExtension _ex = new EditorExtension();
 
         [MenuItem("Tools/Google Sheet Integration")]
@@ -89,8 +87,8 @@ namespace GoogleSheetIntergation {
                     G2UConfig.Instance.CommentColumnTitle);
                 G2UConfig.Instance.ArraySeparator = _ex.TextField("Array separator", G2UConfig.Instance.ArraySeparator);
                 if(_ex.Foldout("Google sheet data", visualize: true)) {
-                    ShowGoogleSheetDataControl();
                     DrawGoogleSheetDataList();
+                    ShowGoogleSheetDataControl();
                 }
             });
         }
@@ -103,7 +101,12 @@ namespace GoogleSheetIntergation {
         }
 
         private void AddGoogleSheetData() {
-            G2UConfig.Instance.GoogleSheetData.Add(GoogleSheetData.CreateDefaultData());
+            if(G2UConfig.Instance.GoogleSheetData.Any()) {
+                G2UConfig.Instance.GoogleSheetData.Add(G2UConfig.Instance.GoogleSheetData.Last().Clone());
+            }
+            else {
+                G2UConfig.Instance.GoogleSheetData.Add(GoogleSheetData.CreateDefaultData());
+            }
         }
 
         private void RemoveGoogleSheetData() {
@@ -136,6 +139,7 @@ namespace GoogleSheetIntergation {
             if(data.DataType == DataType.ScriptableObject) {
                 _ex.SetEnumPopUpValue("VariableType" + data.GoogleDriveSheetGuid, VariableType.Field);
                 _ex.SetEnumPopUpValue("Fieldaccessmodifier" + data.GoogleDriveSheetGuid, GoogleSheetIntergation.AccessModifiers.Public);
+                data.DataExtension = ".asset";
                 GUI.enabled = false;
             }
             data.VariableType = _ex.EnumPopUp("Variable Type", "VariableType" + data.GoogleDriveSheetGuid, data.VariableType, textWidth: 145);
@@ -166,19 +170,24 @@ namespace GoogleSheetIntergation {
 
         private void GenerateData() {
             _ex.DrawHorizontal(() => {
-                _ex.Button("Generate data", () => { LoadDataFromGoogle(GenerateBaseData); });
+                _ex.Button("Generate data", () => {
+                    LoadDataFromGoogle(GenerateBaseData);
+                    GenerateParameterClass();
+                });
 
                 if(G2UConfig.Instance.GoogleSheetData.Any(data => data.DataType == DataType.ScriptableObject)) {
-                    _ex.Button("Generate SO prefab", GenerateSOPrefab);
+                    _ex.Button("Generate SO prefab", () => {
+                        GenerateSOPrefab();
+                        GenerateParameterClass();
+                    });
+                   
                 }
             });
         }
 
        
         private void GenerateBaseData(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> inputData) {
-            
             FileBuilder.Generate(inputData);
-            //GenerateParameterClass();
             Debug.Log("Classes was successful generated");
         }
 
@@ -199,39 +208,38 @@ namespace GoogleSheetIntergation {
 
         private void GenerateParameterClass() {
             var files = Directory.GetFiles(G2UConfig.Instance.PathManager.GetDataFolder().FullName);
-            GenerateParameterClass(null);
+            GenerateParameterClass(files);
         }
 
-        private void GenerateParameterClass(List<string> data) {
+        private void GenerateParameterClass(string[] data) {
             G2UConfig.Instance.PathManager.CreateParameterFolder();
             var file = new StringBuilder();
-            file.AppendLine(string.Format("{0}internal class {1} {{", ClassGenerator.ClassGenerator.GetTabulator(1),
+            file.AppendLine(string.Format("internal class {0} {{",
                 G2UConfig.Instance.ParameterClassName));
             foreach(var d in data) {
+                if(d.Contains(".meta")) continue;
                 var path = new FileInfo(Path.Combine(G2UConfig.Instance.DataLocation, d));
                 var resourcesPath = PathManager.GetResourcesPath(path);
                 file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\r\n",
-                    ClassGenerator.ClassGenerator.GetTabulator(2), d.UppercaseFirst(), resourcesPath));
+                    ClassGenerator.ClassGenerator.GetTabulator(1), Path.GetFileNameWithoutExtension(path.Name).UppercaseFirst(), resourcesPath));
             }
-            file.Append(string.Format("{0}}}\r\n{1}}}", ClassGenerator.ClassGenerator.GetTabulator(1),
-                ClassGenerator.ClassGenerator.GetTabulator(0)));
+            file.Append("}");
             SaveLoadManager.SaveFile(G2UConfig.Instance.ParameterClassFullName, file.ToString());
         }
 
-        private void LoadDataFromGoogleAndParseIt(Action onComplete)
-        {
+        private void LoadDataFromGoogleAndParseIt(Action onComplete) {
             GoogleSheetLoaderEditor.LoadSheet(G2UConfig.Instance.GoogleSheetData,
-                () =>
-                {
-                     GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-                        G2UConfig.Instance.GoogleSheetData); if (onComplete != null)
-                     {
-                         onComplete.Invoke();
-                     }
+                () => {
+                    GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
+                        G2UConfig.Instance.GoogleSheetData);
+                    if(onComplete != null) {
+                        onComplete.Invoke();
+                    }
                 });
         }
 
         private void LoadDataFromGoogle(Action<Dictionary<string, Dictionary<string, List<AbstractDataRow>>>> onComplete) {
+            if(G2UConfig.Instance.GoogleSheetData == null || !G2UConfig.Instance.GoogleSheetData.Any()) return;
             GoogleSheetLoaderEditor.LoadSheet(G2UConfig.Instance.GoogleSheetData,
                 () => {
                     var data = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,

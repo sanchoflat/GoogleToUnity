@@ -102,7 +102,7 @@ public class CSVReader {
         GoogleSheetData googleData) {
         return new ClassDataRow(parameterName, data, comment, G2UConfig.Instance.ArraySeparator,
             googleData.FieldAccessModifiers,
-            googleData.SetAccessModifiers, googleData.VariableType);
+            googleData.SetAccessModifiers, googleData.VariableType, googleData.DataType);
     }
 
     private static List<string> GetKeys(List<Dictionary<string, string>> data) {
