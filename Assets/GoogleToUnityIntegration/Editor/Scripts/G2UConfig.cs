@@ -59,6 +59,12 @@ namespace GoogleSheetIntergation {
             SkipRowPrefix = config.SkipRowPrefix;
             CommentColumnTitle = config.CommentColumnTitle;
             ArraySeparator = config.ArraySeparator;
+
+            PathManager.ClassLocation = config.ClassLocation;
+            PathManager.DataLocation = config.DataLocation;
+            PathManager.ParamClassName = config.ParameterClassName;
+            PathManager.ParamLocation = config.ParameterClassLocation;
+
             return true;
         }
         public void SaveConfig()

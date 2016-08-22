@@ -8,6 +8,8 @@ namespace GoogleSheetIntergation {
 
         public static Dictionary<string, Dictionary<string, List<AbstractDataRow>>> ParseSheet(
             List<string> dataFromGoogle, List<GoogleSheetData> googleData) {
+            if(dataFromGoogle.Count != googleData.Count)
+                return null;
             if(dataFromGoogle == null || dataFromGoogle.Count == 0) return null;
             ParsedData = new Dictionary<string, Dictionary<string, List<AbstractDataRow>>>();
             for(var i = 0; i < dataFromGoogle.Count; i++) {

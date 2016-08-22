@@ -22,15 +22,21 @@ namespace GoogleSheetIntergation {
             Space, Class
         }
 
-        public static void GenerateSOPrefab(string soName, Dictionary<string, List<AbstractDataRow>> data)
-        {
+        public static void GenerateSOPrefab(string soName, Dictionary<string, List<AbstractDataRow>> data,
+            string @namespace) {
+            string currentAssemblyName = "Assembly-CSharp";
+            var t = Type.GetType(string.Format("{0}.{1}, {2}", @namespace, soName, currentAssemblyName));
+            if(t == null) {
+                throw new ArgumentNullException();
+            }
+            if(t.BaseType != typeof(ScriptableObject)) { return; }
             foreach(var d in data) {
                 var so = ScriptableObject.CreateInstance(soName);
                 AssetDatabase.CreateAsset(so,
-                    string.Format("{0}/{1}.asset", G2UConfig.Instance.PathManager.DataLocation.Replace("./", ""), d.Key));
+                    string.Format("{0}/{1}.asset", G2UConfig.Instance.PathManager.DataLocation.Replace("./", ""),
+                        d.Key));
                 InitFields(so, d.Value);
             }
-
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -128,8 +134,8 @@ namespace GoogleSheetIntergation {
                     return new ScriptableObjectSerializer();
                 case DataType.XML:
                     return new XMLSerializer();
-                case DataType.Binary:
-                    return new BinarySerializer();
+//                case DataType.Binary:
+//                    return new BinarySerializer();
             }
             throw new InvalidDataException();
         }
@@ -458,7 +464,7 @@ namespace GoogleSheetIntergation {
 
         private readonly string _header;
         private const int SpaceSize = 10;
-        public SpaceDataRow(string name) : base(null, null, null, null, DataType.Binary) {
+        public SpaceDataRow(string name) : base(null, null, null, null, DataType.ScriptableObject) {
             _header = name.Replace(G2UConfig.Instance.SkipRowPrefix, "");
         }
 

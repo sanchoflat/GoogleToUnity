@@ -12,8 +12,7 @@
 
     public enum DataType {
         XML,
-        ScriptableObject,
-        Binary
+        ScriptableObject
     }
 
     public class GoogleSheetData {
