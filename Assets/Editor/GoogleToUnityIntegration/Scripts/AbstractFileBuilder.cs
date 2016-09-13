@@ -22,18 +22,29 @@ namespace GoogleSheetIntergation {
             Space, Class
         }
 
+        public static string GetTabulator(int c) {
+            StringBuilder sb = new StringBuilder(c);
+            for(int i = 0; i < c; i++) {
+                sb.Append("\t");
+            }
+            return sb.ToString();
+        }
+
         public static void GenerateSOPrefab(string soName, Dictionary<string, List<AbstractDataRow>> data,
             string @namespace) {
             string currentAssemblyName = "Assembly-CSharp";
             var t = Type.GetType(string.Format("{0}.{1}, {2}", @namespace, soName, currentAssemblyName));
             if(t == null) {
-                throw new ArgumentNullException();
+                Debug.LogError("Can't find " + soName + " in assembly");
+                return;
             }
             if(t.BaseType != typeof(ScriptableObject)) { return; }
+            var da = G2UConfig.Instance.GoogleSheetData;
+            int i = 0;
             foreach(var d in data) {
                 var so = ScriptableObject.CreateInstance(soName);
                 AssetDatabase.CreateAsset(so,
-                    string.Format("{0}/{1}.asset", G2UConfig.Instance.PathManager.DataLocation.Replace("./", ""),
+                    string.Format("{0}/{1}.asset", da[i++].DataLocation.Replace("./", ""),
                         d.Key));
                 InitFields(so, d.Value);
             }
@@ -41,8 +52,8 @@ namespace GoogleSheetIntergation {
             AssetDatabase.Refresh();
         }
 
-        public static void Generate(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data)
-        {
+        public static void Generate(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data) {
+            if(data == null) return;
             var googleData = G2UConfig.Instance.GoogleSheetData;
             int counter = 0;
             foreach(var d in data) {
@@ -56,13 +67,14 @@ namespace GoogleSheetIntergation {
         {
             var classBuilder = GetClassBuilder(googleData);
             var fullClassName = googleData.Namespace + "." + className;
-            G2UConfig.Instance.PathManager.CreateClassFolder();
-            G2UConfig.Instance.PathManager.CreateDataFolder();
 
+            googleData.CreateDataFolder();
+            googleData.CreateClassFolder();
+            
             var dataRow = data.ElementAt(0).Value;
             var @class = classBuilder.GenerateClass(dataRow, className);
 
-            File.WriteAllText(G2UConfig.Instance.PathManager.GetClassPath(className), @class);
+            File.WriteAllText(googleData.GetClassPath(className), @class);
 
             if(googleData.DataType == DataType.ScriptableObject) return; 
             
@@ -122,7 +134,7 @@ namespace GoogleSheetIntergation {
                 var concreteDataName = concreteData.Key;
                 instance = InitValues(instance, concreteData.Value, googleData.VariableType);
                 var serializedClass = serializer.Serialize(instance);
-                File.WriteAllText(G2UConfig.Instance.PathManager.GetDataPath(concreteDataName, googleData.DataExtension),
+                File.WriteAllText(googleData.GetDataPath(concreteDataName),
                     serializedClass);
             }
         }
@@ -205,6 +217,17 @@ namespace GoogleSheetIntergation {
             }
             return @object;
         }
+
+
+        public static string GetTabulator(byte count)
+        {
+            StringBuilder sb = new StringBuilder(count);
+            for (int i = 0; i < count; i++)
+            {
+                sb.Append("\t");
+            }
+            return sb.ToString();
+        }
     }
 
     public class ClassBuilder {
@@ -240,14 +263,14 @@ namespace GoogleSheetIntergation {
             sb.AppendLine("using System;");
             sb.AppendLine(string.Format("namespace {0} {{", _googleData.Namespace));
             sb.AppendLine(string.Format("{0}[Serializable]public class {1} {{",
-                ClassGenerator.ClassGenerator.GetTabulator(1),
+                FileBuilder.GetTabulator(1),
                 _className));
             return sb;
         }
 
         protected virtual StringBuilder GetFileEnd() {
             var sb = new StringBuilder();
-            sb.AppendLine(string.Format("{0}}}", ClassGenerator.ClassGenerator.GetTabulator(1)));
+            sb.AppendLine(string.Format("{0}}}", FileBuilder.GetTabulator(1)));
             sb.AppendLine("}");
             return sb;
         }
@@ -276,18 +299,19 @@ namespace GoogleSheetIntergation {
             var sb = new StringBuilder(); 
             sb.Append("\r\n");
             sb.AppendLine(string.Format("{0}public {1} {2}(string name) {{",
-                ClassGenerator.ClassGenerator.GetTabulator(2), returnType, methodName));
-            
-            sb.AppendLine(ClassGenerator.ClassGenerator.GetTabulator(3) + "switch(name){");
+                FileBuilder.GetTabulator(2), returnType, methodName));
+
+            sb.AppendLine(FileBuilder.GetTabulator(3) + "name = name.ToLower();");
+            sb.AppendLine(FileBuilder.GetTabulator(3) + "switch(name){");
             
             for(int i = 0; i < data.Count; i++) {
                 if (!isValid(data[i])) continue;
-                sb.AppendLine(String.Format("{0}case \"{1}\":", ClassGenerator.ClassGenerator.GetTabulator(4), data[i].ParameterName));
-                sb.AppendLine(String.Format("{0}return {1};", ClassGenerator.ClassGenerator.GetTabulator(5), data[i].ParameterName));
+                sb.AppendLine(String.Format("{0}case \"{1}\":", FileBuilder.GetTabulator(4), data[i].ParameterName.ToLower()));
+                sb.AppendLine(String.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName));
             }
-            sb.AppendLine(ClassGenerator.ClassGenerator.GetTabulator(3) + "}");
-            sb.AppendLine(string.Format("{0}return {1};", ClassGenerator.ClassGenerator.GetTabulator(3), GetDefault(returnType)));
-            sb.AppendLine(ClassGenerator.ClassGenerator.GetTabulator(2) + "}");
+            sb.AppendLine(FileBuilder.GetTabulator(3) + "}");
+            sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(3), GetDefault(returnType)));
+            sb.AppendLine(FileBuilder.GetTabulator(2) + "}");
             return sb.ToString();
         }
 
@@ -304,20 +328,20 @@ namespace GoogleSheetIntergation {
 //            var sb = new StringBuilder();
 //            sb.Append("\r\n");
 //            sb.AppendLine(string.Format("{0}public static {1} Load{1}(string path) {{",
-//                ClassGenerator.ClassGenerator.GetTabulator(2), _className));
+//                FileBuilder.GetTabulator(2), _className));
 //            sb.AppendLine(string.Format("{0}var configAsset = Resources.Load(path) as TextAsset;",
-//                ClassGenerator.ClassGenerator.GetTabulator(3)));
+//                FileBuilder.GetTabulator(3)));
 //            sb.AppendLine(string.Format("{0}var configText = configAsset.text;",
-//                ClassGenerator.ClassGenerator.GetTabulator(3)));
+//                FileBuilder.GetTabulator(3)));
 //            sb.AppendLine(string.Format("{0}if(string.IsNullOrEmpty(configText)) return null;",
-//                ClassGenerator.ClassGenerator.GetTabulator(3)));
+//                FileBuilder.GetTabulator(3)));
 //            sb.AppendLine(string.Format("{0}// You can change deserialize function below",
-//                ClassGenerator.ClassGenerator.GetTabulator(3)));
+//                FileBuilder.GetTabulator(3)));
 //            sb.AppendLine(string.Format("{0}var config = configText.DeserializeFromXMLString<{1}>();",
-//                ClassGenerator.ClassGenerator.GetTabulator(3),
+//                FileBuilder.GetTabulator(3),
 //                _className));
-//            sb.AppendLine(string.Format("{0}return config;", ClassGenerator.ClassGenerator.GetTabulator(3)));
-//            sb.AppendLine(string.Format("{0}}}", ClassGenerator.ClassGenerator.GetTabulator(2)));
+//            sb.AppendLine(string.Format("{0}return config;", FileBuilder.GetTabulator(3)));
+//            sb.AppendLine(string.Format("{0}}}", FileBuilder.GetTabulator(2)));
 //            return sb.ToString();
 //        }
 
@@ -331,7 +355,7 @@ namespace GoogleSheetIntergation {
             sb.AppendLine("using UnityEngine;");
             sb.AppendLine(string.Format("namespace {0} {{", _googleData.Namespace));
             sb.AppendLine(string.Format("{0}public class {1} : ScriptableObject {{",
-                ClassGenerator.ClassGenerator.GetTabulator(1), _className));
+                FileBuilder.GetTabulator(1), _className));
             return sb;
         }
     }
@@ -407,9 +431,9 @@ namespace GoogleSheetIntergation {
 
         public override string GetRowString() {
             var sb = new StringBuilder();
-            sb.Append(GetCommentData(Comment, ClassGenerator.ClassGenerator.GetTabulator(2)));
+            sb.Append(GetCommentData(Comment, FileBuilder.GetTabulator(2)));
             sb.Append(GetTooltip(Comment));
-            sb.Append(ClassGenerator.ClassGenerator.GetTabulator(2));
+            sb.Append(FileBuilder.GetTabulator(2));
             sb.Append(string.Format("{0} {1}{2}", GetFieldAccessModifier(), ParameterType, (IsArray ? "[]" : "")));
             sb.Append(string.Format(" {0}", ParameterName));
             if(_variableType == VariableType.Property) {
@@ -423,7 +447,7 @@ namespace GoogleSheetIntergation {
 
         private string GetTooltip(string comment) {
             if(string.IsNullOrEmpty(comment) || _dataType != DataType.ScriptableObject) return "";
-            return string.Format("[Tooltip(\"{0}\")]", comment);
+            return string.Format("{0}[Tooltip(\"{1}\")]\r\n", FileBuilder.GetTabulator(2), comment);
         }
 
         private string GetSetAccessModifier() {
@@ -471,9 +495,9 @@ namespace GoogleSheetIntergation {
 
         public override string GetRowString() {
             if(string.IsNullOrEmpty(_header)) {
-                return string.Format("\r\n{0}[Space({1})]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize);
+                return string.Format("\r\n{0}[Space({1})]", FileBuilder.GetTabulator(2), SpaceSize);
             }
-            return string.Format("\r\n{0}[Space({1}, order = 1), Header(\"{2}\", order = 2)]", ClassGenerator.ClassGenerator.GetTabulator(2), SpaceSize, _header);
+            return string.Format("\r\n{0}[Space({1}, order = 1), Header(\"{2}\", order = 2)]", FileBuilder.GetTabulator(2), SpaceSize, _header);
         }
     }
 

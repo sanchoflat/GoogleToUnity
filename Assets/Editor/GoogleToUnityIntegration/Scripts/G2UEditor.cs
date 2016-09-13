@@ -79,10 +79,15 @@ namespace GoogleSheetIntergation {
                 G2UConfig.Instance.SkipRowPrefix = _ex.TextField("Skip prefix", G2UConfig.Instance.SkipRowPrefix);
                 G2UConfig.Instance.ParameterClassName = _ex.TextField("Parameter class name",
                     G2UConfig.Instance.ParameterClassName);
-                G2UConfig.Instance.ParameterClassLocation = _ex.TextField("Parameter class location",
-                    G2UConfig.Instance.ParameterClassLocation);
-                G2UConfig.Instance.ClassLocation = _ex.TextField("Class location", G2UConfig.Instance.ClassLocation);
-                G2UConfig.Instance.DataLocation = _ex.TextField("Data location", G2UConfig.Instance.DataLocation);
+                G2UConfig.Instance.ParameterClassLocation = _ex.TextField("Parameter class location", G2UConfig.Instance.ParameterClassLocation);
+                
+                
+                var parLoc = G2UConfig.Instance.ParameterClassLocation;
+                if(parLoc.EndsWith("/")) {
+                    G2UConfig.Instance.ParameterClassLocation = parLoc.Substring(0, parLoc.Length - 1);
+                }
+
+
                 G2UConfig.Instance.CommentColumnTitle = _ex.TextField("Comment column title",
                     G2UConfig.Instance.CommentColumnTitle);
                 G2UConfig.Instance.ArraySeparator = _ex.TextField("Array separator", G2UConfig.Instance.ArraySeparator);
@@ -129,6 +134,22 @@ namespace GoogleSheetIntergation {
                 data.DataExtension = _ex.TextField("Data extension", data.DataExtension);
                 data.DataType = _ex.EnumPopUp("Data type", "Data type" + data.GoogleDriveSheetGuid, data.DataType, textWidth:145);
                 data.Namespace = _ex.TextField("Namespace", data.Namespace);
+
+                if (data.DataLocation == null || data.ClassLocation == null) { data.CreateDefaultPath(); }
+
+                data.ClassLocation = _ex.TextField("Class location", data.ClassLocation);
+                data.DataLocation = _ex.TextField("Data location", data.DataLocation);
+                var cLoc = data.ClassLocation;
+                
+                if(cLoc.EndsWith("/")) {
+                    data.ClassLocation = cLoc.Substring(0, cLoc.Length - 1);
+                }
+                var dLoc = data.DataLocation;
+                if(dLoc.EndsWith("/")) {
+                    data.DataLocation = dLoc.Substring(0, dLoc.Length - 1);
+                }
+
+
                 AccessModifiers(data);
                 _ex.Button("Remove", () => { G2UConfig.Instance.GoogleSheetData.RemoveAt(counter); });
             }, bgColor: ColorManager.GetColor(), border: true);
@@ -212,8 +233,8 @@ namespace GoogleSheetIntergation {
         }
 
         private void GenerateParameterClass() {
-            if(!Directory.Exists(G2UConfig.Instance.PathManager.GetDataFolder().FullName)) return;
-            var files = Directory.GetFiles(G2UConfig.Instance.PathManager.GetDataFolder().FullName);
+            if(!Directory.Exists(G2UConfig.Instance.PathManager.GetParamFolder().FullName)) return;
+            var files = Directory.GetFiles(G2UConfig.Instance.PathManager.GetParamFolder().FullName);
             GenerateParameterClass(files);
         }
 
@@ -224,10 +245,10 @@ namespace GoogleSheetIntergation {
                 G2UConfig.Instance.ParameterClassName));
             foreach(var d in data) {
                 if(d.Contains(".meta")) continue;
-                var path = new FileInfo(Path.Combine(G2UConfig.Instance.DataLocation, d));
+                var path = new FileInfo(Path.Combine(G2UConfig.Instance.ParameterClassLocation, d));
                 var resourcesPath = PathManager.GetResourcesPath(path);
                 file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\r\n",
-                    ClassGenerator.ClassGenerator.GetTabulator(1), Path.GetFileNameWithoutExtension(path.Name).UppercaseFirst(), resourcesPath));
+                    FileBuilder.GetTabulator(1), Path.GetFileNameWithoutExtension(path.Name).UppercaseFirst(), resourcesPath));
             }
             file.Append("}");
             SaveLoadManager.SaveFile(G2UConfig.Instance.ParameterClassFullName, file.ToString());

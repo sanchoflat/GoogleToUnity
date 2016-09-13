@@ -18,7 +18,7 @@ namespace GoogleSheetIntergation {
             for(var i = 0; i < googleData.Count; i++) {
                 var url = googleData[i].GetURL();
                 if(string.IsNullOrEmpty(url)) {
-                    Debug.LogWarning("URL is empty");
+                    Debug.LogWarning(string.Format("URL for {0} is empty", googleData[i].GoogleDataName));
                     continue;
                 }
                 LoadSheet(url, t => {

@@ -31,15 +31,7 @@ namespace GoogleSheetIntergation {
             set { PathManager.ParamLocation = value; }
         }
 
-        public string ClassLocation {
-            get { return PathManager.ClassLocation; }
-            set { PathManager.ClassLocation = value; }
-        }
-
-        public string DataLocation {
-            get { return PathManager.DataLocation; }
-            set { PathManager.DataLocation = value; }
-        }
+      
 
         public string ParameterClassFullName {
             get { return ParameterClassLocation + "/" + ParameterClassName + ".cs"; }
@@ -60,8 +52,6 @@ namespace GoogleSheetIntergation {
             CommentColumnTitle = config.CommentColumnTitle;
             ArraySeparator = config.ArraySeparator;
 
-            PathManager.ClassLocation = config.ClassLocation;
-            PathManager.DataLocation = config.DataLocation;
             PathManager.ParamClassName = config.ParameterClassName;
             PathManager.ParamLocation = config.ParameterClassLocation;
 
