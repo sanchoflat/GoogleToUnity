@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 
 namespace GoogleSheetIntergation {
@@ -57,24 +56,20 @@ namespace GoogleSheetIntergation {
 
         public string DataLocation { get; set; }
 
-
-        public void CreateDataFolder()
-        {
+        public void CreateDataFolder() {
             G2UConfig.Instance.PathManager.CreateFolder(new DirectoryInfo(DataLocation));
         }
 
-        public void CreateClassFolder()
-        {
+        public void CreateClassFolder() {
             G2UConfig.Instance.PathManager.CreateFolder(new DirectoryInfo(ClassLocation));
         }
 
         public string GetDataPath(string name) {
-            return String.Format("{0}/{1}.{2}", DataLocation, name, DataExtension);
+            return string.Format("{0}/{1}.{2}", DataLocation, name, DataExtension);
         }
 
-        public string GetClassPath(string name)
-        {
-            return String.Format("{0}/{1}.{2}", ClassLocation, name, "cs");
+        public string GetClassPath(string name) {
+            return string.Format("{0}/{1}.{2}", ClassLocation, name, "cs");
         }
 
         public string GetURL() {
@@ -88,7 +83,7 @@ namespace GoogleSheetIntergation {
         }
 
         public GoogleSheetData Clone() {
-            var newData = new GoogleSheetData() {
+            var newData = new GoogleSheetData {
                 VariableType = VariableType,
                 DataType = DataType,
                 Namespace = Namespace,
@@ -102,7 +97,6 @@ namespace GoogleSheetIntergation {
                 ClassLocation = "./Assets/Scripts/Configs"
             };
             return newData;
-
         }
 
         public void CreateDefaultPath() {

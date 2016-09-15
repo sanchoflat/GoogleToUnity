@@ -30,15 +30,15 @@ namespace GoogleSheetIntergation {
             return sb.ToString();
         }
 
-        public static void GenerateSOPrefab(string soName, Dictionary<string, List<AbstractDataRow>> data,
+        public static bool GenerateSOPrefab(string soName, Dictionary<string, List<AbstractDataRow>> data,
             string @namespace) {
             string currentAssemblyName = "Assembly-CSharp";
             var t = Type.GetType(string.Format("{0}.{1}, {2}", @namespace, soName, currentAssemblyName));
             if(t == null) {
-                Debug.LogError("Can't find " + soName + " in assembly");
-                return;
+                Debug.LogWarning(string.Format("Can't gennerate SO, because can't find <b>{0}</b> in assembly", soName));
+                return false;
             }
-            if(t.BaseType != typeof(ScriptableObject)) { return; }
+            if(t.BaseType != typeof(ScriptableObject)) { return false; }
             var da = G2UConfig.Instance.GoogleSheetData;
             int i = 0;
             foreach(var d in data) {
@@ -47,9 +47,11 @@ namespace GoogleSheetIntergation {
                     string.Format("{0}/{1}.asset", da[i++].DataLocation.Replace("./", ""),
                         d.Key));
                 InitFields(so, d.Value);
+                Debug.Log(string.Format("SO asset <b>{0}</b> was successful generated", d.Key));
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+            return true;
         }
 
         public static void Generate(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data) {
@@ -150,17 +152,6 @@ namespace GoogleSheetIntergation {
 //                    return new BinarySerializer();
             }
             throw new InvalidDataException();
-        }
-
-        private static bool AssemblyContainsClass(string fullName)
-        {
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            foreach(var asm in assemblies) {
-                if(asm.GetType(fullName) != null) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         private static object InitValues(object @object, List<AbstractDataRow> dataList, VariableType varType)
@@ -298,19 +289,22 @@ namespace GoogleSheetIntergation {
             if(!data.Any(isValid)) return "";
             var sb = new StringBuilder(); 
             sb.Append("\r\n");
-            sb.AppendLine(string.Format("{0}public {1} {2}(string name) {{",
+            sb.AppendLine(string.Format("{0}public {1} {2}(string key) {{",
                 FileBuilder.GetTabulator(2), returnType, methodName));
 
-            sb.AppendLine(FileBuilder.GetTabulator(3) + "name = name.ToLower();");
-            sb.AppendLine(FileBuilder.GetTabulator(3) + "switch(name){");
+            sb.AppendLine(FileBuilder.GetTabulator(3) + "key = key.ToLower();");
+            sb.AppendLine(FileBuilder.GetTabulator(3) + "switch(key){");
             
             for(int i = 0; i < data.Count; i++) {
                 if (!isValid(data[i])) continue;
                 sb.AppendLine(String.Format("{0}case \"{1}\":", FileBuilder.GetTabulator(4), data[i].ParameterName.ToLower()));
-                sb.AppendLine(String.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName));
+                sb.AppendLine(String.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName)); 
             }
+
+            sb.AppendLine(FileBuilder.GetTabulator(4) + "default:");
+            sb.AppendLine(string.Format("{0}Debug.Log(\"Can't find key <b>\" + {1} + \"</b>\");", FileBuilder.GetTabulator(5), "key"));
+            sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(5), GetDefault(returnType)));
             sb.AppendLine(FileBuilder.GetTabulator(3) + "}");
-            sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(3), GetDefault(returnType)));
             sb.AppendLine(FileBuilder.GetTabulator(2) + "}");
             return sb.ToString();
         }
@@ -321,7 +315,7 @@ namespace GoogleSheetIntergation {
             {
                 return Activator.CreateInstance(type).ToString();
             }
-            return "null";
+            return "string.Empty";
         }
 
 //        private string GenerateLoadingClass() {

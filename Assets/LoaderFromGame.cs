@@ -16,14 +16,6 @@ public class LoaderFromGame : MonoBehaviour {
     }*/
 
 
-    private void AppendClass() {
-
-  
-        string cl = "using UnityEngine;" +
-                    "public class Test : MonoBehavior { " +
-                    "private void Start() { " +
-                    "Debug.Log(\"test\");}" +
-                    "}";
-    }
+   
 
 }

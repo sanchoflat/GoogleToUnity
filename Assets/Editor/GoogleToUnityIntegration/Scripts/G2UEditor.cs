@@ -132,31 +132,36 @@ namespace GoogleSheetIntergation {
                 data.GoogleDriveFileGuid = _ex.TextField("GoogleDriveFileGuid", data.GoogleDriveFileGuid);
                 data.GoogleDriveSheetGuid = _ex.TextField("GoogleDriveSheetGuid", data.GoogleDriveSheetGuid);
                 data.DataExtension = _ex.TextField("Data extension", data.DataExtension);
-                data.DataType = _ex.EnumPopUp("Data type", "Data type" + data.GoogleDriveSheetGuid, data.DataType, textWidth:145);
+                data.DataType = _ex.EnumPopUp("Data type", "Data type" + data.GoogleDriveSheetGuid, data.DataType,
+                    textWidth: 145);
                 data.Namespace = _ex.TextField("Namespace", data.Namespace);
-
-                if (data.DataLocation == null || data.ClassLocation == null) { data.CreateDefaultPath(); }
-
+                if(data.DataLocation == null || data.ClassLocation == null) { data.CreateDefaultPath(); }
                 data.ClassLocation = _ex.TextField("Class location", data.ClassLocation);
                 data.DataLocation = _ex.TextField("Data location", data.DataLocation);
-                var cLoc = data.ClassLocation;
-                
-                if(cLoc.EndsWith("/")) {
-                    data.ClassLocation = cLoc.Substring(0, cLoc.Length - 1);
-                }
-                var dLoc = data.DataLocation;
-                if(dLoc.EndsWith("/")) {
-                    data.DataLocation = dLoc.Substring(0, dLoc.Length - 1);
-                }
-
-
+                CheckForLocationEnding(data);
                 AccessModifiers(data);
+                _ex.Button("Generate class file", () => { LoadDataFromGoogle(data, GenerateBaseData); });
+                _ex.Button("Generate data file", () => {
+                    if(data.DataType == DataType.ScriptableObject) {
+                        GenerateSOPrefab(data);
+                    }
+                });
                 _ex.Button("Remove", () => { G2UConfig.Instance.GoogleSheetData.RemoveAt(counter); });
             }, bgColor: ColorManager.GetColor(), border: true);
         }
 
-        private void AccessModifiers(GoogleSheetData data)
-        {
+        private void CheckForLocationEnding(GoogleSheetData data) {
+            var cLoc = data.ClassLocation;
+            if(cLoc.EndsWith("/")) {
+                data.ClassLocation = cLoc.Substring(0, cLoc.Length - 1);
+            }
+            var dLoc = data.DataLocation;
+            if(dLoc.EndsWith("/")) {
+                data.DataLocation = dLoc.Substring(0, dLoc.Length - 1);
+            }
+        }
+
+        private void AccessModifiers(GoogleSheetData data) {
             if(data.DataType == DataType.ScriptableObject) {
                 _ex.SetEnumPopUpValue("VariableType" + data.GoogleDriveSheetGuid, VariableType.Field);
                 _ex.SetEnumPopUpValue("Fieldaccessmodifier" + data.GoogleDriveSheetGuid,
@@ -169,13 +174,13 @@ namespace GoogleSheetIntergation {
                     data.DataExtension = ".xml";
                 }
             }
-
-
-            data.VariableType = _ex.EnumPopUp("Variable Type", "VariableType" + data.GoogleDriveSheetGuid, data.VariableType, textWidth: 145);
-            data.FieldAccessModifiers = _ex.EnumPopUp("Field access modifier", "Fieldaccessmodifier" + data.GoogleDriveSheetGuid, data.FieldAccessModifiers, textWidth: 145);
-            if (data.VariableType == VariableType.Property)
-            {
-                data.SetAccessModifiers = _ex.EnumPopUp("Set access modifier", "Set access modifier" + data.GoogleDriveSheetGuid, data.SetAccessModifiers, textWidth: 145);
+            data.VariableType = _ex.EnumPopUp("Variable Type", "VariableType" + data.GoogleDriveSheetGuid,
+                data.VariableType, textWidth: 145);
+            data.FieldAccessModifiers = _ex.EnumPopUp("Field access modifier",
+                "Fieldaccessmodifier" + data.GoogleDriveSheetGuid, data.FieldAccessModifiers, textWidth: 145);
+            if(data.VariableType == VariableType.Property) {
+                data.SetAccessModifiers = _ex.EnumPopUp("Set access modifier",
+                    "Set access modifier" + data.GoogleDriveSheetGuid, data.SetAccessModifiers, textWidth: 145);
             }
             GUI.enabled = true;
         }
@@ -199,38 +204,48 @@ namespace GoogleSheetIntergation {
 
         private void GenerateData() {
             _ex.DrawVertical(() => {
-                _ex.Button("Generate data", () => {
-                    LoadDataFromGoogle(GenerateBaseData);
-                });
-
+                _ex.Button("Generate class file", () => { LoadDataFromGoogle(GenerateBaseData); });
                 if(G2UConfig.Instance.GoogleSheetData.Any(data => data.DataType == DataType.ScriptableObject)) {
                     _ex.Button("Generate SO prefab", GenerateSOPrefab);
-                   
                 }
                 _ex.Button("Generate Param Class", GenerateParameterClass);
             });
         }
-
        
-        private void GenerateBaseData(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> inputData) {
-            FileBuilder.Generate(inputData);
-            Debug.Log("Classes was successful generated");
-        }
-
- 
-        private void GenerateSOPrefab() {
-            if(GoogleDataParser.ParsedData == null) {
-                LoadDataFromGoogleAndParseIt(GenerateSOPrefab);
+        private void GenerateBaseData(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> inputData, GoogleSheetData data) {
+            if(inputData == null) {
+                Debug.LogWarning(string.Format("Impossible to generate <b>{0}</b>", data.GoogleDataName));
                 return;
             }
-            for (int i = 0; i < GoogleDataParser.ParsedData.Count; i++) {
-                var keyValuePair = GoogleDataParser.ParsedData.ElementAt(i);
+            FileBuilder.Generate(inputData);
+            Debug.Log(string.Format("Class <b>{0}</b> was successful generated", data.GoogleDataName));
+        }
+
+        private void GenerateSOPrefab() {
+            GenerateSOPrefab(G2UConfig.Instance.GoogleSheetData);
+        }
+
+        private void GenerateSOPrefab(List<GoogleSheetData> data) {
+            foreach(var googleSheetData in data) {
+                LoadDataFromGoogle(googleSheetData, GenerateSOPrefab);
+            }
+        }
+
+        private void GenerateSOPrefab(GoogleSheetData data) {
+            LoadDataFromGoogle(data, GenerateSOPrefab);
+        }
+
+        private void GenerateSOPrefab(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> parsedData,
+            GoogleSheetData data) {
+            for(var i = 0; i < parsedData.Count; i++) {
+                var keyValuePair = parsedData.ElementAt(i);
                 if(G2UConfig.Instance.GoogleSheetData[i].DataType == DataType.ScriptableObject) {
-                    FileBuilder.GenerateSOPrefab(keyValuePair.Key, keyValuePair.Value, G2UConfig.Instance.GoogleSheetData[i].Namespace);
+                    FileBuilder.GenerateSOPrefab(keyValuePair.Key, keyValuePair.Value,
+                        G2UConfig.Instance.GoogleSheetData[i].Namespace);
                 }
             }
-            Debug.Log("SO asset was successful generated");
         }
+
 
         private void GenerateParameterClass() {
             if(!Directory.Exists(G2UConfig.Instance.PathManager.GetParamFolder().FullName)) return;
@@ -252,28 +267,29 @@ namespace GoogleSheetIntergation {
             }
             file.Append("}");
             SaveLoadManager.SaveFile(G2UConfig.Instance.ParameterClassFullName, file.ToString());
-            Debug.Log("Param class was successful generated");
+            Debug.Log(string.Format("Param class <b>{0}</b> was successful generated", G2UConfig.Instance.ParameterClassName));
         }
 
-        private void LoadDataFromGoogleAndParseIt(Action onComplete) {
-            GoogleSheetLoaderEditor.LoadSheet(G2UConfig.Instance.GoogleSheetData,
-                () => {
-                    GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-                        G2UConfig.Instance.GoogleSheetData);
-                    if(onComplete != null) {
-                        onComplete.Invoke();
-                    }
-                });
+        private void LoadDataFromGoogle(Action<Dictionary<string, Dictionary<string, List<AbstractDataRow>>>, GoogleSheetData> onComplete) {
+            LoadDataFromGoogle(G2UConfig.Instance.GoogleSheetData, onComplete);
         }
 
-        private void LoadDataFromGoogle(Action<Dictionary<string, Dictionary<string, List<AbstractDataRow>>>> onComplete) {
-            if(G2UConfig.Instance.GoogleSheetData == null || !G2UConfig.Instance.GoogleSheetData.Any()) return;
-            GoogleSheetLoaderEditor.LoadSheet(G2UConfig.Instance.GoogleSheetData,
-                () => {
-                    var data = GoogleDataParser.ParseSheet(GoogleSheetLoaderEditor.DataFromGoogle,
-                        G2UConfig.Instance.GoogleSheetData);
+        private void LoadDataFromGoogle(List<GoogleSheetData> googleSheetData,
+            Action<Dictionary<string, Dictionary<string, List<AbstractDataRow>>>, GoogleSheetData> onComplete) {
+            if(googleSheetData == null || !googleSheetData.Any()) { return; }
+            foreach(var sheetData in googleSheetData) {
+                LoadDataFromGoogle(sheetData, onComplete);
+            }
+        }
+     
+        private void LoadDataFromGoogle(GoogleSheetData googleSheetData,
+            Action<Dictionary<string, Dictionary<string, List<AbstractDataRow>>>, GoogleSheetData> onComplete) {
+            if(googleSheetData == null) { return; }
+            GoogleSheetLoaderEditor.LoadSheet(googleSheetData,
+                (recievedData) => {
+                    var data = GoogleDataParser.ParseSheet(recievedData, googleSheetData);
                     if(onComplete != null) {
-                        onComplete.Invoke(data);
+                        onComplete.Invoke(data, googleSheetData);
                     }
                 });
         }
