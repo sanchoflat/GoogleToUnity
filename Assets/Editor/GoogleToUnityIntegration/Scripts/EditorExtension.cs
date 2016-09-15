@@ -233,13 +233,15 @@ namespace EternalMaze.EditorWindows {
 
         public void Button(string text, Action action, float width = -1, float height = 20) {
             if(action == null) { return; }
+           
             if(width > 0) {
                 if(GUILayout.Button(text, GUILayout.Width(width), GUILayout.Height(height))) {
                     action();
                 }
             }
             else {
-                if(GUILayout.Button(text, GUILayout.Height(height))) {
+                if (GUILayout.Button(text,GUILayout.Height(height)))
+                {
                     action();
                 }
             }

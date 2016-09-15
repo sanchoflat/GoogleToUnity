@@ -14,17 +14,15 @@ using UnityEngine;
 
 
 namespace GoogleSheetIntergation {
-   
-
     public class FileBuilder {
-
         public enum DataRowType {
-            Space, Class
+            Space,
+            Class
         }
 
         public static string GetTabulator(int c) {
-            StringBuilder sb = new StringBuilder(c);
-            for(int i = 0; i < c; i++) {
+            var sb = new StringBuilder(c);
+            for(var i = 0; i < c; i++) {
                 sb.Append("\t");
             }
             return sb.ToString();
@@ -32,7 +30,7 @@ namespace GoogleSheetIntergation {
 
         public static bool GenerateSOPrefab(string soName, Dictionary<string, List<AbstractDataRow>> data,
             string @namespace) {
-            string currentAssemblyName = "Assembly-CSharp";
+            var currentAssemblyName = "Assembly-CSharp";
             var t = Type.GetType(string.Format("{0}.{1}, {2}", @namespace, soName, currentAssemblyName));
             if(t == null) {
                 Debug.LogWarning(string.Format("Can't gennerate SO, because can't find <b>{0}</b> in assembly", soName));
@@ -40,7 +38,7 @@ namespace GoogleSheetIntergation {
             }
             if(t.BaseType != typeof(ScriptableObject)) { return false; }
             var da = G2UConfig.Instance.GoogleSheetData;
-            int i = 0;
+            var i = 0;
             foreach(var d in data) {
                 var so = ScriptableObject.CreateInstance(soName);
                 AssetDatabase.CreateAsset(so,
@@ -55,9 +53,9 @@ namespace GoogleSheetIntergation {
         }
 
         public static void Generate(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data) {
-            if(data == null) return;
+            if(data == null) { return; }
             var googleData = G2UConfig.Instance.GoogleSheetData;
-            int counter = 0;
+            var counter = 0;
             foreach(var d in data) {
                 SaveData(d.Key, d.Value, googleData[counter++]);
             }
@@ -65,30 +63,23 @@ namespace GoogleSheetIntergation {
             AssetDatabase.Refresh();
         }
 
-        private static void SaveData(string className, Dictionary<string, List<AbstractDataRow>> data, GoogleSheetData googleData)
-        {
+        private static void SaveData(string className, Dictionary<string, List<AbstractDataRow>> data,
+            GoogleSheetData googleData) {
             var classBuilder = GetClassBuilder(googleData);
             var fullClassName = googleData.Namespace + "." + className;
-
             googleData.CreateDataFolder();
             googleData.CreateClassFolder();
-            
             var dataRow = data.ElementAt(0).Value;
             var @class = classBuilder.GenerateClass(dataRow, className);
-
             File.WriteAllText(googleData.GetClassPath(className), @class);
-
-            if(googleData.DataType == DataType.ScriptableObject) return; 
-            
+            if(googleData.DataType == DataType.ScriptableObject) { return; }
             var assembly = CompileSource(@class);
             var instance = assembly.CreateInstance(fullClassName);
             SaveConcreteData(instance, data, googleData);
         }
 
-        private static ClassBuilder GetClassBuilder(GoogleSheetData googleData)
-        {
-            switch (googleData.DataType)
-            {
+        private static ClassBuilder GetClassBuilder(GoogleSheetData googleData) {
+            switch(googleData.DataType) {
                 case DataType.ScriptableObject:
                     return new ScriptableObjectBuilder(googleData);
                 case DataType.XML:
@@ -97,8 +88,7 @@ namespace GoogleSheetIntergation {
             throw new InvalidDataException();
         }
 
-        private static Assembly CompileSource(string source)
-        {
+        private static Assembly CompileSource(string source) {
             var provider = new CSharpCodeProvider();
             var param = new CompilerParameters();
 
@@ -124,9 +114,7 @@ namespace GoogleSheetIntergation {
         }
 
         private static void SaveConcreteData(object instance, Dictionary<string, List<AbstractDataRow>> dataRow,
-            GoogleSheetData googleData)
-        {
-
+            GoogleSheetData googleData) {
             if(instance == null) {
                 Debug.Log("Instance is null");
                 return;
@@ -141,23 +129,18 @@ namespace GoogleSheetIntergation {
             }
         }
 
-        private static AbstractSerializer GetSerializer(DataType dataType)
-        {
+        private static AbstractSerializer GetSerializer(DataType dataType) {
             switch(dataType) {
                 case DataType.ScriptableObject:
                     return new ScriptableObjectSerializer();
                 case DataType.XML:
                     return new XMLSerializer();
-//                case DataType.Binary:
-//                    return new BinarySerializer();
             }
             throw new InvalidDataException();
         }
 
-        private static object InitValues(object @object, List<AbstractDataRow> dataList, VariableType varType)
-        {
-            switch (varType)
-            {
+        private static object InitValues(object @object, List<AbstractDataRow> dataList, VariableType varType) {
+            switch(varType) {
                 case VariableType.Field:
                     return InitFields(@object, dataList);
                 case VariableType.Property:
@@ -169,7 +152,7 @@ namespace GoogleSheetIntergation {
         private static object InitFields(object @object, List<AbstractDataRow> dataList) {
             var type = @object.GetType();
             foreach(var row in dataList) {
-                if(row.SkipDataRow())continue;
+                if(row.SkipDataRow()) { continue; }
                 var field = type.GetField(row.ParameterName);
                 if(field != null) {
                     var genericListType = typeof(AbstractDataRow.Test<>);
@@ -189,9 +172,8 @@ namespace GoogleSheetIntergation {
 
         private static object InitProperty(object @object, List<AbstractDataRow> dataList) {
             var type = @object.GetType();
-            foreach (var row in dataList)
-            {
-                if (row.SkipDataRow()) continue;
+            foreach(var row in dataList) {
+                if(row.SkipDataRow()) { continue; }
                 var field = type.GetProperty(row.ParameterName);
                 if(field != null) {
                     var genericListType = typeof(AbstractDataRow.Test<>);
@@ -209,12 +191,9 @@ namespace GoogleSheetIntergation {
             return @object;
         }
 
-
-        public static string GetTabulator(byte count)
-        {
-            StringBuilder sb = new StringBuilder(count);
-            for (int i = 0; i < count; i++)
-            {
+        public static string GetTabulator(byte count) {
+            var sb = new StringBuilder(count);
+            for(var i = 0; i < count; i++) {
                 sb.Append("\t");
             }
             return sb.ToString();
@@ -266,53 +245,45 @@ namespace GoogleSheetIntergation {
             return sb;
         }
 
-        private string GenerateLoadingMethods(List<AbstractDataRow> data)
-        {
-            StringBuilder sb = new StringBuilder();
+        private string GenerateLoadingMethods(List<AbstractDataRow> data) {
+            var sb = new StringBuilder();
             sb.AppendLine(GenerateLoadingClass("GetStringByName",
                 row => !row.IsArray && row.ParameterType == typeof(string) && !row.SkipDataRow(), typeof(string), data));
-
             sb.AppendLine(GenerateLoadingClass("GetIntByName",
                 row => !row.IsArray && row.ParameterType == typeof(int) && !row.SkipDataRow(), typeof(int), data));
-
             sb.AppendLine(GenerateLoadingClass("GetFloatByName",
                 row => !row.IsArray && row.ParameterType == typeof(float) && !row.SkipDataRow(), typeof(float), data));
-
             sb.AppendLine(GenerateLoadingClass("GetLongByName",
                 row => !row.IsArray && row.ParameterType == typeof(long) && !row.SkipDataRow(), typeof(long), data));
-
             return sb.ToString();
         }
 
-        private string GenerateLoadingClass(string methodName, Func<AbstractDataRow, bool> isValid, Type returnType, List<AbstractDataRow> data) {
-
-            if(!data.Any(isValid)) return "";
-            var sb = new StringBuilder(); 
+        private string GenerateLoadingClass(string methodName, Func<AbstractDataRow, bool> isValid, Type returnType,
+            List<AbstractDataRow> data) {
+            if(!data.Any(isValid)) { return ""; }
+            var sb = new StringBuilder();
             sb.Append("\r\n");
             sb.AppendLine(string.Format("{0}public {1} {2}(string key) {{",
                 FileBuilder.GetTabulator(2), returnType, methodName));
-
             sb.AppendLine(FileBuilder.GetTabulator(3) + "key = key.ToLower();");
             sb.AppendLine(FileBuilder.GetTabulator(3) + "switch(key){");
-            
-            for(int i = 0; i < data.Count; i++) {
-                if (!isValid(data[i])) continue;
-                sb.AppendLine(String.Format("{0}case \"{1}\":", FileBuilder.GetTabulator(4), data[i].ParameterName.ToLower()));
-                sb.AppendLine(String.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName)); 
+            for(var i = 0; i < data.Count; i++) {
+                if(!isValid(data[i])) { continue; }
+                sb.AppendLine(string.Format("{0}case \"{1}\":", FileBuilder.GetTabulator(4),
+                    data[i].ParameterName.ToLower()));
+                sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName));
             }
-
             sb.AppendLine(FileBuilder.GetTabulator(4) + "default:");
-            sb.AppendLine(string.Format("{0}Debug.Log(\"Can't find key <b>\" + {1} + \"</b>\");", FileBuilder.GetTabulator(5), "key"));
+            sb.AppendLine(string.Format("{0}Debug.Log(\"Can't find key <b>\" + {1} + \"</b>\");",
+                FileBuilder.GetTabulator(5), "key"));
             sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(5), GetDefault(returnType)));
             sb.AppendLine(FileBuilder.GetTabulator(3) + "}");
             sb.AppendLine(FileBuilder.GetTabulator(2) + "}");
             return sb.ToString();
         }
 
-        public static string GetDefault(Type type)
-        {
-            if (type.IsValueType)
-            {
+        public static string GetDefault(Type type) {
+            if(type.IsValueType) {
                 return Activator.CreateInstance(type).ToString();
             }
             return "string.Empty";
@@ -338,11 +309,10 @@ namespace GoogleSheetIntergation {
 //            sb.AppendLine(string.Format("{0}}}", FileBuilder.GetTabulator(2)));
 //            return sb.ToString();
 //        }
-
     }
 
     public class ScriptableObjectBuilder : ClassBuilder {
-        public ScriptableObjectBuilder(GoogleSheetData googleData) : base(googleData) { }
+        public ScriptableObjectBuilder(GoogleSheetData googleData) : base(googleData) {}
 
         protected override StringBuilder GetFileStart() {
             var sb = new StringBuilder();
@@ -363,9 +333,9 @@ namespace GoogleSheetIntergation {
         public bool IsArray { get; set; }
         public string Comment { get; set; }
 
-        protected AbstractDataRow(string parameterName, string[] data, string comment, string arraySeparator, DataType dataType)
-        {
-            if(parameterName == null) return;
+        protected AbstractDataRow(string parameterName, string[] data, string comment, string arraySeparator,
+            DataType dataType) {
+            if(parameterName == null) { return; }
             ParameterName = PathManager.PrepareFileName(parameterName, true);
             Comment = comment;
             _dataType = dataType;
@@ -416,8 +386,7 @@ namespace GoogleSheetIntergation {
         public ClassDataRow(string parameterName, string[] data, string comment, string arraySeparator,
             AccessModifiers fieldAccessModifier, AccessModifiers setAccessModifier,
             VariableType varType, DataType dataType)
-            : base(parameterName, data, comment, arraySeparator, dataType)
-        {
+            : base(parameterName, data, comment, arraySeparator, dataType) {
             _fieldAccessModifier = fieldAccessModifier;
             _setAccessModifier = setAccessModifier;
             _variableType = varType;
@@ -440,7 +409,7 @@ namespace GoogleSheetIntergation {
         }
 
         private string GetTooltip(string comment) {
-            if(string.IsNullOrEmpty(comment) || _dataType != DataType.ScriptableObject) return "";
+            if(string.IsNullOrEmpty(comment) || _dataType != DataType.ScriptableObject) { return ""; }
             return string.Format("{0}[Tooltip(\"{1}\")]\r\n", FileBuilder.GetTabulator(2), comment);
         }
 
@@ -482,16 +451,17 @@ namespace GoogleSheetIntergation {
 
         private readonly string _header;
         private const int SpaceSize = 10;
+
         public SpaceDataRow(string name) : base(null, null, null, null, DataType.ScriptableObject) {
             _header = name.Replace(G2UConfig.Instance.SkipRowPrefix, "");
         }
-
 
         public override string GetRowString() {
             if(string.IsNullOrEmpty(_header)) {
                 return string.Format("\r\n{0}[Space({1})]", FileBuilder.GetTabulator(2), SpaceSize);
             }
-            return string.Format("\r\n{0}[Space({1}, order = 1), Header(\"{2}\", order = 2)]", FileBuilder.GetTabulator(2), SpaceSize, _header);
+            return string.Format("\r\n{0}[Space({1}, order = 1), Header(\"{2}\", order = 2)]",
+                FileBuilder.GetTabulator(2), SpaceSize, _header);
         }
     }
 

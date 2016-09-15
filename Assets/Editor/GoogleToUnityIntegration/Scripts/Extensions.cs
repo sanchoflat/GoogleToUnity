@@ -33,36 +33,5 @@ public static class Extensions {
         return dataRow.DataRowType == FileBuilder.DataRowType.Space;
     }
 
-    public static T DeserializeXMLFromPath<T>(this T @object, string path)
-    {
-        var serializer = new XmlSerializer(typeof(T));
-        var reader = new StreamReader(path);
-        @object = (T)serializer.Deserialize(reader);
-        reader.Close();
-        return @object;
-    }
 
-    public static T DeserializeFromXMLString<T>(this string data)
-    {
-        var serializer = new XmlSerializer(typeof(T));
-        using (TextReader reader = new StringReader(data))
-        {
-            var result = (T)serializer.Deserialize(reader);
-            return result;
-        }
-    }
-
-    public static void SerializeToXML<T>(this T @object, string path)
-    {
-        var ser = new XmlSerializer(typeof(T));
-        using (var sww = new StringWriter())
-        {
-            using (var writer = XmlWriter.Create(sww))
-            {
-                ser.Serialize(writer, @object);
-                var xml = sww.ToString();
-                File.WriteAllText(path, xml);
-            }
-        }
-    }
 }

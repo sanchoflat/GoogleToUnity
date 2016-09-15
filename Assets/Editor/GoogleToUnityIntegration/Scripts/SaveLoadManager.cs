@@ -9,8 +9,7 @@ namespace GoogleSheetIntergation {
             if(!File.Exists(PathManager.ConfigFileInfo.FullName)) {
                 return null;
             }
-            G2UConfig config = null;
-            return config.DeserializeXMLFromPath(PathManager.ConfigFileInfo.FullName);
+            return G2UConfig.DeserializeXMLFromPath(PathManager.ConfigFileInfo.FullName);
         }
 
         public static void SaveConfig(G2UConfig config) {

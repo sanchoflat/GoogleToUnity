@@ -1,13 +1,14 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using System.Xml;
+using System.Xml.Serialization;
+
 
 namespace GoogleSheetIntergation {
-
-
     public class G2UConfig {
-
         public static G2UConfig Instance {
             get {
-                if (_instance == null) _instance = CreateDefault();
+                if(_instance == null) { _instance = CreateDefault(); }
                 return _instance;
             }
         }
@@ -20,7 +21,6 @@ namespace GoogleSheetIntergation {
         public string CommentColumnTitle { get; set; }
         public string ArraySeparator { get; set; }
 
-
         public string ParameterClassName {
             get { return PathManager.ParamClassName; }
             set { PathManager.ParamClassName = value; }
@@ -30,8 +30,6 @@ namespace GoogleSheetIntergation {
             get { return PathManager.ParamLocation; }
             set { PathManager.ParamLocation = value; }
         }
-
-      
 
         public string ParameterClassFullName {
             get { return ParameterClassLocation + "/" + ParameterClassName + ".cs"; }
@@ -45,25 +43,22 @@ namespace GoogleSheetIntergation {
 
         public bool LoadConfig() {
             var config = SaveLoadManager.LoadConfig();
-            if(config == null) return false;
+            if(config == null) { return false; }
             WasInizialized = config.WasInizialized;
             GoogleSheetData = config.GoogleSheetData;
             SkipRowPrefix = config.SkipRowPrefix;
             CommentColumnTitle = config.CommentColumnTitle;
             ArraySeparator = config.ArraySeparator;
-
             PathManager.ParamClassName = config.ParameterClassName;
             PathManager.ParamLocation = config.ParameterClassLocation;
-
             return true;
         }
-        public void SaveConfig()
-        {
-             SaveLoadManager.SaveConfig(this);
+
+        public void SaveConfig() {
+            SaveLoadManager.SaveConfig(this);
         }
 
         private static G2UConfig CreateDefault() {
-         
             return new G2UConfig {
                 WasInizialized = false,
                 SkipRowPrefix = "__",
@@ -73,12 +68,31 @@ namespace GoogleSheetIntergation {
                 GoogleSheetData = new List<GoogleSheetData> {
                     GoogleSheetIntergation.GoogleSheetData.CreateDefaultData()
                 },
-                ArraySeparator = "|",
+                ArraySeparator = "|"
             };
         }
-        
+
         public void Inizialize() {
             WasInizialized = true;
+        }
+
+        public static G2UConfig DeserializeXMLFromPath(string path) {
+            var serializer = new XmlSerializer(typeof(G2UConfig));
+            var reader = new StreamReader(path);
+            var config = (G2UConfig) serializer.Deserialize(reader);
+            reader.Close();
+            return config;
+        }
+
+        public void SerializeToXML(string path) {
+            var ser = new XmlSerializer(typeof(G2UConfig));
+            using(var sww = new StringWriter()) {
+                using(var writer = XmlWriter.Create(sww)) {
+                    ser.Serialize(writer, this);
+                    var xml = sww.ToString();
+                    File.WriteAllText(path, xml);
+                }
+            }
         }
     }
 }

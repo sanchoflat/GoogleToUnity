@@ -129,21 +129,27 @@ namespace GoogleSheetIntergation {
         private void DrawGoogleSheetData(GoogleSheetData data, int counter) {
             _ex.DrawVertical(() => {
                 data.GoogleDataName = _ex.TextField("Sheet Name", data.GoogleDataName);
-                data.GoogleDriveFileGuid = _ex.TextField("GoogleDriveFileGuid", data.GoogleDriveFileGuid);
-                data.GoogleDriveSheetGuid = _ex.TextField("GoogleDriveSheetGuid", data.GoogleDriveSheetGuid);
-                data.DataExtension = _ex.TextField("Data extension", data.DataExtension);
-                data.DataType = _ex.EnumPopUp("Data type", "Data type" + data.GoogleDriveSheetGuid, data.DataType,
-                    textWidth: 145);
-                data.Namespace = _ex.TextField("Namespace", data.Namespace);
-                if(data.DataLocation == null || data.ClassLocation == null) { data.CreateDefaultPath(); }
-                data.ClassLocation = _ex.TextField("Class location", data.ClassLocation);
-                data.DataLocation = _ex.TextField("Data location", data.DataLocation);
-                CheckForLocationEnding(data);
-                AccessModifiers(data);
+                if(_ex.Foldout("Parameters", data.GoogleDataName + "paramExpander", true)) {
+                    data.GoogleDriveFileGuid = _ex.TextField("GoogleDriveFileGuid", data.GoogleDriveFileGuid);
+                    data.GoogleDriveSheetGuid = _ex.TextField("GoogleDriveSheetGuid", data.GoogleDriveSheetGuid);
+                    data.DataExtension = _ex.TextField("Data extension", data.DataExtension);
+                    data.DataType = _ex.EnumPopUp("Data type", "Data type" + data.GoogleDriveSheetGuid, data.DataType,
+                        textWidth: 145);
+                    data.Namespace = _ex.TextField("Namespace", data.Namespace);
+                    if(data.DataLocation == null || data.ClassLocation == null) { data.CreateDefaultPath(); }
+                    data.ClassLocation = _ex.TextField("Class location", data.ClassLocation);
+                    data.DataLocation = _ex.TextField("Data location", data.DataLocation);
+                    CheckForLocationEnding(data);
+                    AccessModifiers(data);
+                }
                 _ex.Button("Generate class file", () => { LoadDataFromGoogle(data, GenerateBaseData); });
-                _ex.Button("Generate data file", () => {
+                _ex.Button(string.Format("Generate {0} file", data.DataType), () =>
+                {
                     if(data.DataType == DataType.ScriptableObject) {
                         GenerateSOPrefab(data);
+                    }
+                    else {
+                        Debug.LogWarning("Other types unsupported yet :(");
                     }
                 });
                 _ex.Button("Remove", () => { G2UConfig.Instance.GoogleSheetData.RemoveAt(counter); });
