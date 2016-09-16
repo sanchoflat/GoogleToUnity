@@ -28,54 +28,96 @@ namespace GoogleSheetIntergation {
             return sb.ToString();
         }
 
-        public static bool GenerateSOPrefab(string soName, Dictionary<string, List<AbstractDataRow>> data,
-            string @namespace) {
-            var currentAssemblyName = "Assembly-CSharp";
-            var t = Type.GetType(string.Format("{0}.{1}, {2}", @namespace, soName, currentAssemblyName));
-            if(t == null) {
-                Debug.LogWarning(string.Format("Can't gennerate SO, because can't find <b>{0}</b> in assembly", soName));
-                return false;
-            }
-            if(t.BaseType != typeof(ScriptableObject)) { return false; }
-            var da = G2UConfig.Instance.GoogleSheetData;
-            var i = 0;
-            foreach(var d in data) {
-                var so = ScriptableObject.CreateInstance(soName);
-                AssetDatabase.CreateAsset(so,
-                    string.Format("{0}/{1}.asset", da[i++].DataLocation.Replace("./", ""),
-                        d.Key));
-                InitFields(so, d.Value);
-                Debug.Log(string.Format("SO asset <b>{0}</b> was successful generated", d.Key));
-            }
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-            return true;
-        }
-
-        public static void Generate(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data) {
-            if(data == null) { return; }
-            var googleData = G2UConfig.Instance.GoogleSheetData;
-            var counter = 0;
-            foreach(var d in data) {
-                SaveData(d.Key, d.Value, googleData[counter++]);
+        public static void GenerateClassFile(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data, GoogleSheetData googleData)
+        {
+            if (data == null) { return; }
+            foreach (var d in data)
+            {
+                GenerateClassFile(d.Key, d.Value, googleData);
             }
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
-        private static void SaveData(string className, Dictionary<string, List<AbstractDataRow>> data,
+        private static void GenerateClassFile(string className, Dictionary<string, List<AbstractDataRow>> data,
             GoogleSheetData googleData) {
             var classBuilder = GetClassBuilder(googleData);
-            var fullClassName = googleData.Namespace + "." + className;
-            googleData.CreateDataFolder();
             googleData.CreateClassFolder();
             var dataRow = data.ElementAt(0).Value;
             var @class = classBuilder.GenerateClass(dataRow, className);
             File.WriteAllText(googleData.GetClassPath(className), @class);
-            if(googleData.DataType == DataType.ScriptableObject) { return; }
+            Debug.Log(string.Format("Class <b>{0}</b> was successful generated", className));
+        }
+
+        public static bool GenerateData(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data,
+            GoogleSheetData googleSheetData) {
+
+            bool output = false;
+            switch(googleSheetData.DataType) {
+                case DataType.ScriptableObject:
+                    output = GenerateSOPrefab(data, googleSheetData);
+                    break;
+                case DataType.XML:
+                    output = GenerateTextPrefab(data, googleSheetData);
+                    break;
+            }
+            return output;
+        }
+
+        private static bool GenerateSOPrefab(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data,
+            GoogleSheetData googleSheetData) {
+                var currentAssemblyName = "Assembly-CSharp";
+                var soName = data.ElementAt(0).Key;
+                var t = Type.GetType(string.Format("{0}.{1}, {2}", googleSheetData.Namespace, soName, currentAssemblyName));
+                if (t == null)
+                {
+                    Debug.LogWarning(string.Format("Can't gennerate SO, because can't find <b>{0}</b> in assembly", soName));
+                    return false;
+                }
+                if (t.BaseType != typeof(ScriptableObject)) { return false; }
+                var keys = data.Keys.ToArray();
+                var values = data.Values.ToArray();
+                googleSheetData.CreateDataFolder();
+                for (var i = 0; i < keys.Length; i++) {
+                    foreach (var val in values[i]) {
+                        var so = ScriptableObject.CreateInstance(soName);
+                        var path = string.Format("{0}/{1}.asset", googleSheetData.DataLocation.Replace("./", ""),
+                            val.Key);
+                        AssetDatabase.CreateAsset(so,path);
+                        InitFields(so, val.Value);
+                        Debug.Log(string.Format("SO asset <b>{0}</b> was successful generated", val.Key));
+
+                        G2UConfig.Instance.ParamClassBuilder.UpdateDataLocation(path);
+                    }
+                }
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh();
+                return true;
+        }
+
+        private static bool GenerateTextPrefab(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data,
+            GoogleSheetData googleData) {
+            
+            googleData.CreateClassFolder();
+            var className = data.Keys.ElementAt(0);
+
+            var classBuilder = GetClassBuilder(googleData);
+            var fullClassName = googleData.Namespace + "." + className;
+
+            var dataRow = data.ElementAt(0).Value.ElementAt(0).Value;
+            var @class = classBuilder.GenerateClass(dataRow, className);
+            
+            
             var assembly = CompileSource(@class);
             var instance = assembly.CreateInstance(fullClassName);
-            SaveConcreteData(instance, data, googleData);
+
+            foreach(var value in data.Values) {
+                SerializeData(instance, value, googleData);
+            }
+            
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return true;
         }
 
         private static ClassBuilder GetClassBuilder(GoogleSheetData googleData) {
@@ -113,7 +155,7 @@ namespace GoogleSheetIntergation {
             return result.CompiledAssembly;
         }
 
-        private static void SaveConcreteData(object instance, Dictionary<string, List<AbstractDataRow>> dataRow,
+        private static void SerializeData(object instance, Dictionary<string, List<AbstractDataRow>> dataRow,
             GoogleSheetData googleData) {
             if(instance == null) {
                 Debug.Log("Instance is null");
@@ -124,8 +166,10 @@ namespace GoogleSheetIntergation {
                 var concreteDataName = concreteData.Key;
                 instance = InitValues(instance, concreteData.Value, googleData.VariableType);
                 var serializedClass = serializer.Serialize(instance);
-                File.WriteAllText(googleData.GetDataPath(concreteDataName),
+                var path = googleData.GetDataPath(concreteDataName);
+                File.WriteAllText(path,
                     serializedClass);
+                G2UConfig.Instance.ParamClassBuilder.UpdateDataLocation(path);
             }
         }
 

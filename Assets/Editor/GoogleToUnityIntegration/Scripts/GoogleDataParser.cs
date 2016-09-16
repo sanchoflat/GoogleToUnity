@@ -27,7 +27,7 @@ namespace GoogleSheetIntergation {
         public static Dictionary<string, Dictionary<string, List<AbstractDataRow>>> ParseSheet(
             string dataFromGoogle, GoogleSheetData googleData) {
             var ParsedData = new Dictionary<string, Dictionary<string, List<AbstractDataRow>>>();
-            if(dataFromGoogle.Contains("DOCTYPE")) { return ParsedData; }
+            if(dataFromGoogle.Contains("DOCTYPE")) { return null; }
             string name;
             var sheetData = ParseSheet(dataFromGoogle, out name, googleData);
             if(ParsedData.ContainsKey(name)) { return ParsedData; }

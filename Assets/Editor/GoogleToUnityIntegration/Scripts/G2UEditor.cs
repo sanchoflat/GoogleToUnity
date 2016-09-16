@@ -142,16 +142,8 @@ namespace GoogleSheetIntergation {
                     CheckForLocationEnding(data);
                     AccessModifiers(data);
                 }
-                _ex.Button("Generate class file", () => { LoadDataFromGoogle(data, GenerateBaseData); });
-                _ex.Button(string.Format("Generate {0} file", data.DataType), () =>
-                {
-                    if(data.DataType == DataType.ScriptableObject) {
-                        GenerateSOPrefab(data);
-                    }
-                    else {
-                        Debug.LogWarning("Other types unsupported yet :(");
-                    }
-                });
+                _ex.Button("Generate class file", () => { GenerateClassFile(data); });
+                _ex.Button(string.Format("Generate {0} file", data.DataType), () => { GenerateDataFile(data);});
                 _ex.Button("Remove", () => { G2UConfig.Instance.GoogleSheetData.RemoveAt(counter); });
             }, bgColor: ColorManager.GetColor(), border: true);
         }
@@ -210,73 +202,83 @@ namespace GoogleSheetIntergation {
 
         private void GenerateData() {
             _ex.DrawVertical(() => {
-                _ex.Button("Generate class file", () => { LoadDataFromGoogle(GenerateBaseData); });
-                if(G2UConfig.Instance.GoogleSheetData.Any(data => data.DataType == DataType.ScriptableObject)) {
-                    _ex.Button("Generate SO prefab", GenerateSOPrefab);
-                }
-                _ex.Button("Generate Param Class", GenerateParameterClass);
+                _ex.Button("Generate class file", GenerateClassFile);
+                _ex.Button("Generate data file", GenerateDataFile);
+                _ex.Button("Generate Parameter Class", G2UConfig.Instance.ParamClassBuilder.GenerateParameterClass);
             });
         }
-       
-        private void GenerateBaseData(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> inputData, GoogleSheetData data) {
-            if(inputData == null) {
-                Debug.LogWarning(string.Format("Impossible to generate <b>{0}</b>", data.GoogleDataName));
-                return;
-            }
-            FileBuilder.Generate(inputData);
-            Debug.Log(string.Format("Class <b>{0}</b> was successful generated", data.GoogleDataName));
+
+        #region Generate class file
+
+        private void GenerateClassFile() {
+            GenerateClassFile(G2UConfig.Instance.GoogleSheetData);
         }
 
-        private void GenerateSOPrefab() {
-            GenerateSOPrefab(G2UConfig.Instance.GoogleSheetData);
-        }
-
-        private void GenerateSOPrefab(List<GoogleSheetData> data) {
+        private void GenerateClassFile(List<GoogleSheetData> data) {
             foreach(var googleSheetData in data) {
-                LoadDataFromGoogle(googleSheetData, GenerateSOPrefab);
+                GenerateClassFile(googleSheetData);
             }
         }
 
-        private void GenerateSOPrefab(GoogleSheetData data) {
-            LoadDataFromGoogle(data, GenerateSOPrefab);
-        }
-
-        private void GenerateSOPrefab(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> parsedData,
-            GoogleSheetData data) {
-            for(var i = 0; i < parsedData.Count; i++) {
-                var keyValuePair = parsedData.ElementAt(i);
-                if(G2UConfig.Instance.GoogleSheetData[i].DataType == DataType.ScriptableObject) {
-                    FileBuilder.GenerateSOPrefab(keyValuePair.Key, keyValuePair.Value,
-                        G2UConfig.Instance.GoogleSheetData[i].Namespace);
+        private void GenerateClassFile(GoogleSheetData data) {
+            LoadDataFromGoogle(data, (parsedData, sheetData) => {
+                for(var i = 0; i < parsedData.Count; i++) {
+                    FileBuilder.GenerateClassFile(parsedData, data);
                 }
+            });
+        }
+
+        #endregion
+
+        #region Generate data file
+
+        private void GenerateDataFile() {
+            GenerateDataFile(G2UConfig.Instance.GoogleSheetData);
+        }
+
+        private void GenerateDataFile(List<GoogleSheetData> data) {
+            foreach(var googleSheetData in data) {
+                GenerateDataFile(googleSheetData);
             }
         }
 
-
-        private void GenerateParameterClass() {
-            if(!Directory.Exists(G2UConfig.Instance.PathManager.GetParamFolder().FullName)) return;
-            var files = Directory.GetFiles(G2UConfig.Instance.PathManager.GetParamFolder().FullName);
-            GenerateParameterClass(files);
+        private void GenerateDataFile(GoogleSheetData data) {
+            LoadDataFromGoogle(data, (parsedData, sheetData) => {
+                for(var i = 0; i < parsedData.Count; i++) {
+                    FileBuilder.GenerateData(parsedData, sheetData);
+                }
+            });
         }
 
-        private void GenerateParameterClass(string[] data) {
-            G2UConfig.Instance.PathManager.CreateParameterFolder();
-            var file = new StringBuilder();
-            file.AppendLine(string.Format("internal class {0} {{",
-                G2UConfig.Instance.ParameterClassName));
-            foreach(var d in data) {
-                if(d.Contains(".meta")) continue;
-                var path = new FileInfo(Path.Combine(G2UConfig.Instance.ParameterClassLocation, d));
-                var resourcesPath = PathManager.GetResourcesPath(path);
-                file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\r\n",
-                    FileBuilder.GetTabulator(1), Path.GetFileNameWithoutExtension(path.Name).UppercaseFirst(), resourcesPath));
-            }
-            file.Append("}");
-            SaveLoadManager.SaveFile(G2UConfig.Instance.ParameterClassFullName, file.ToString());
-            Debug.Log(string.Format("Param class <b>{0}</b> was successful generated", G2UConfig.Instance.ParameterClassName));
-        }
+        #endregion
 
-        private void LoadDataFromGoogle(Action<Dictionary<string, Dictionary<string, List<AbstractDataRow>>>, GoogleSheetData> onComplete) {
+        #region Generate parameter class
+
+      
+
+//        private void GenerateParameterClass() {
+//            var file = new StringBuilder();
+//            file.AppendLine(string.Format("internal class {0} {{",
+//                G2UConfig.Instance.ParameterClassName));
+//            foreach(var d in data) {
+//                var path = new FileInfo(d);
+//                var resourcesPath = PathManager.GetResourcesPath(path);
+//                file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\r\n",
+//                    FileBuilder.GetTabulator(1), Path.GetFileNameWithoutExtension(path.Name).UppercaseFirst(),
+//                    resourcesPath));
+//            }
+//            file.Append("}");
+//            SaveLoadManager.SaveFile(G2UConfig.Instance.ParameterClassFullName, file.ToString());
+//            Debug.Log(string.Format("Param class <b>{0}</b> was successful generated",
+//                G2UConfig.Instance.ParameterClassName));
+//        }
+
+        #endregion
+
+        #region Load data from google
+
+        private void LoadDataFromGoogle(Action<Dictionary<string, Dictionary<string, List<AbstractDataRow>>>,
+            GoogleSheetData> onComplete) {
             LoadDataFromGoogle(G2UConfig.Instance.GoogleSheetData, onComplete);
         }
 
@@ -287,18 +289,22 @@ namespace GoogleSheetIntergation {
                 LoadDataFromGoogle(sheetData, onComplete);
             }
         }
-     
+
         private void LoadDataFromGoogle(GoogleSheetData googleSheetData,
             Action<Dictionary<string, Dictionary<string, List<AbstractDataRow>>>, GoogleSheetData> onComplete) {
             if(googleSheetData == null) { return; }
             GoogleSheetLoaderEditor.LoadSheet(googleSheetData,
                 (recievedData) => {
+                    if(string.IsNullOrEmpty(recievedData)) return;
                     var data = GoogleDataParser.ParseSheet(recievedData, googleSheetData);
+                    if(data == null || !data.Any()) return;
                     if(onComplete != null) {
                         onComplete.Invoke(data, googleSheetData);
                     }
                 });
         }
+
+        #endregion
 
         #endregion
     }

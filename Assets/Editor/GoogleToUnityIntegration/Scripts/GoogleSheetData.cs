@@ -64,8 +64,12 @@ namespace GoogleSheetIntergation {
             G2UConfig.Instance.PathManager.CreateFolder(new DirectoryInfo(ClassLocation));
         }
 
+        public string GetDataPath() {
+            return GetDataPath(GoogleDataName);
+        }
+
         public string GetDataPath(string name) {
-            return string.Format("{0}/{1}.{2}", DataLocation, name, DataExtension);
+            return string.Format("{0}/{1}.{2}", DataLocation, name, DataExtension.Replace(".", ""));
         }
 
         public string GetClassPath(string name) {

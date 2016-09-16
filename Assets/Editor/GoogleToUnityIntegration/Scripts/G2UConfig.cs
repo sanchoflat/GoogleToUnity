@@ -21,6 +21,9 @@ namespace GoogleSheetIntergation {
         public string CommentColumnTitle { get; set; }
         public string ArraySeparator { get; set; }
 
+        
+        public ParamClassBuilder ParamClassBuilder = new ParamClassBuilder();
+
         public string ParameterClassName {
             get { return PathManager.ParamClassName; }
             set { PathManager.ParamClassName = value; }

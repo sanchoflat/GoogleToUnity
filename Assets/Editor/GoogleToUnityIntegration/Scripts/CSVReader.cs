@@ -10,14 +10,14 @@ public class CSVReader {
 
     public static Dictionary<string, List<AbstractDataRow>> Read(string file, out string name,
         GoogleSheetData googleSheetData) {
-        var firstData = ReadFirst(file, googleSheetData);
+        var firstData = ReadFirst(file);
         var parsedFileData = TypeManager.UpdateTypes(PrepareParsedFileData(firstData, googleSheetData));
         var newParsedFile = ConvertList(parsedFileData);
         name = parsedFileData.ElementAt(0).Key;
         return newParsedFile;
     }
 
-    private static List<Dictionary<string, string>> ReadFirst(string file, GoogleSheetData googleSheetData) {
+    private static List<Dictionary<string, string>> ReadFirst(string file) {
         var list = new List<Dictionary<string, string>>();
         var lines = Regex.Split(file, LINE_SPLIT_RE);
         if(lines.Length <= 1) { return list; }
