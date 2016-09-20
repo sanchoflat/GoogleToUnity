@@ -61,7 +61,6 @@ namespace GoogleSheetIntergation {
         ///     It saves on PathManager.ConfigFileInfo.FullName
         /// </summary>
         private void DrawSettingsMenu() {
-            SettingsMenu();
             _ex.Button("Create config", () => {
                 ColorManager.Reset();
                 G2UConfig.Instance.Inizialize();
@@ -74,23 +73,8 @@ namespace GoogleSheetIntergation {
         /// <summary>
         ///     Draw base setting parameters
         /// </summary>
-        private void SettingsMenu() {
+        private void GoogleSheetDataMenu() {
             _ex.DrawVertical(() => {
-                G2UConfig.Instance.SkipRowPrefix = _ex.TextField("Skip prefix", G2UConfig.Instance.SkipRowPrefix);
-                G2UConfig.Instance.ParameterClassName = _ex.TextField("Parameter class name",
-                    G2UConfig.Instance.ParameterClassName);
-                G2UConfig.Instance.ParameterClassLocation = _ex.TextField("Parameter class location", G2UConfig.Instance.ParameterClassLocation);
-                
-                
-                var parLoc = G2UConfig.Instance.ParameterClassLocation;
-                if(parLoc.EndsWith("/")) {
-                    G2UConfig.Instance.ParameterClassLocation = parLoc.Substring(0, parLoc.Length - 1);
-                }
-
-
-                G2UConfig.Instance.CommentColumnTitle = _ex.TextField("Comment column title",
-                    G2UConfig.Instance.CommentColumnTitle);
-                G2UConfig.Instance.ArraySeparator = _ex.TextField("Array separator", G2UConfig.Instance.ArraySeparator);
                 if(_ex.Foldout("Google sheet data", visualize: true)) {
                     DrawGoogleSheetDataList();
                     ShowGoogleSheetDataControl();
@@ -189,8 +173,20 @@ namespace GoogleSheetIntergation {
 
         private void BaseMenu() {
             ShowMainMenu();
+            GoogleSheetDataMenu();
             if(_ex.Foldout("Settings", "settingsKey", true)) {
-                SettingsMenu();
+                G2UConfig.Instance.SkipRowPrefix = _ex.TextField("Skip prefix", G2UConfig.Instance.SkipRowPrefix);
+                G2UConfig.Instance.ParameterClassName = _ex.TextField("Parameter class name",
+                    G2UConfig.Instance.ParameterClassName);
+                G2UConfig.Instance.ParameterClassLocation = _ex.TextField("Parameter class location",
+                    G2UConfig.Instance.ParameterClassLocation);
+                var parLoc = G2UConfig.Instance.ParameterClassLocation;
+                if(parLoc.EndsWith("/")) {
+                    G2UConfig.Instance.ParameterClassLocation = parLoc.Substring(0, parLoc.Length - 1);
+                }
+                G2UConfig.Instance.CommentColumnTitle = _ex.TextField("Comment column title",
+                    G2UConfig.Instance.CommentColumnTitle);
+                G2UConfig.Instance.ArraySeparator = _ex.TextField("Array separator", G2UConfig.Instance.ArraySeparator);
                 _ex.Button("Load config", () => { G2UConfig.Instance.LoadConfig(); });
                 _ex.Button("Save current config", () => G2UConfig.Instance.SaveConfig());
             }
@@ -205,6 +201,8 @@ namespace GoogleSheetIntergation {
                 _ex.Button("Generate class file", GenerateClassFile);
                 _ex.Button("Generate data file", GenerateDataFile);
                 _ex.Button("Generate Parameter Class", G2UConfig.Instance.ParamClassBuilder.GenerateParameterClass);
+
+
             });
         }
 
@@ -253,25 +251,6 @@ namespace GoogleSheetIntergation {
         #endregion
 
         #region Generate parameter class
-
-      
-
-//        private void GenerateParameterClass() {
-//            var file = new StringBuilder();
-//            file.AppendLine(string.Format("internal class {0} {{",
-//                G2UConfig.Instance.ParameterClassName));
-//            foreach(var d in data) {
-//                var path = new FileInfo(d);
-//                var resourcesPath = PathManager.GetResourcesPath(path);
-//                file.Append(string.Format("{0}public const string {1}Path = \"{2}\";\r\n",
-//                    FileBuilder.GetTabulator(1), Path.GetFileNameWithoutExtension(path.Name).UppercaseFirst(),
-//                    resourcesPath));
-//            }
-//            file.Append("}");
-//            SaveLoadManager.SaveFile(G2UConfig.Instance.ParameterClassFullName, file.ToString());
-//            Debug.Log(string.Format("Param class <b>{0}</b> was successful generated",
-//                G2UConfig.Instance.ParameterClassName));
-//        }
 
         #endregion
 

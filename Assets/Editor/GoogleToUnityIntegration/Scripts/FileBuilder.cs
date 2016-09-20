@@ -35,8 +35,6 @@ namespace GoogleSheetIntergation {
             {
                 GenerateClassFile(d.Key, d.Value, googleData);
             }
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
         }
 
         private static void GenerateClassFile(string className, Dictionary<string, List<AbstractDataRow>> data,
@@ -45,7 +43,11 @@ namespace GoogleSheetIntergation {
             googleData.CreateClassFolder();
             var dataRow = data.ElementAt(0).Value;
             var @class = classBuilder.GenerateClass(dataRow, className);
-            File.WriteAllText(googleData.GetClassPath(className), @class);
+            var path = googleData.GetClassPath(className);
+            File.WriteAllText(path, @class);
+
+            AssetDatabase.ImportAsset(path.Replace("./", ""), ImportAssetOptions.ForceUpdate);
+            AssetDatabase.Refresh();
             Debug.Log(string.Format("Class <b>{0}</b> was successful generated", className));
         }
 
@@ -85,13 +87,13 @@ namespace GoogleSheetIntergation {
                             val.Key);
                         AssetDatabase.CreateAsset(so,path);
                         InitFields(so, val.Value);
-                        Debug.Log(string.Format("SO asset <b>{0}</b> was successful generated", val.Key));
 
-                        G2UConfig.Instance.ParamClassBuilder.UpdateDataLocation(path);
+                        path = AssetDatabase.GetAssetPath(so);
+                        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                        AssetDatabase.Refresh();
+                        Debug.Log(string.Format("SO asset <b>{0}</b> was successful generated", val.Key));
                     }
                 }
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh();
                 return true;
         }
 
@@ -114,9 +116,6 @@ namespace GoogleSheetIntergation {
             foreach(var value in data.Values) {
                 SerializeData(instance, value, googleData);
             }
-            
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
             return true;
         }
 
@@ -170,6 +169,9 @@ namespace GoogleSheetIntergation {
                 File.WriteAllText(path,
                     serializedClass);
                 G2UConfig.Instance.ParamClassBuilder.UpdateDataLocation(path);
+
+                AssetDatabase.ImportAsset(path.Replace("./", ""), ImportAssetOptions.ForceUpdate);
+                AssetDatabase.Refresh();
             }
         }
 
@@ -318,7 +320,7 @@ namespace GoogleSheetIntergation {
                 sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName));
             }
             sb.AppendLine(FileBuilder.GetTabulator(4) + "default:");
-            sb.AppendLine(string.Format("{0}Debug.Log(\"Can't find key <b>\" + {1} + \"</b>\");",
+            sb.AppendLine(string.Format("{0}Debug.LogWarning(\"Can't find key <b>\" + {1} + \"</b>\");",
                 FileBuilder.GetTabulator(5), "key"));
             sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(5), GetDefault(returnType)));
             sb.AppendLine(FileBuilder.GetTabulator(3) + "}");
