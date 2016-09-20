@@ -210,7 +210,12 @@ namespace GoogleSheetIntergation {
                     }
                     var m = Test.GetType().GetMethod(methodName);
                     var output = m.Invoke(Test, new object[] {row.Data});
-                    field.SetValue(@object, output);
+                    try {
+                        field.SetValue(@object, output);
+                    }
+                    catch {
+                        Debug.LogErrorFormat("Can't set <b>{0}</b> value to <b>{1}</b>",output,  @object);
+                    }
                 }
             }
             return @object;
