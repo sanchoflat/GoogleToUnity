@@ -1,6 +1,6 @@
 # Для чего? #
 
-* Генерация xml и ScriptableObject на основе Google таблиц для Unity
+* Генерация xml и ScriptableObject на основе Google таблиц для Unity в один клик.
 
 # Как настроить? #
 
