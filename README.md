@@ -16,21 +16,18 @@
 4. Заполняем все поля аналогичным образом и жмём кнопку сверху **Generate class files**. После того, как загрузился класс и Unity его скомпилировал, нажимаем **Generate data files**. 
 ![5.png](https://bitbucket.org/repo/gLan95/images/198756042-5.png)
 
-
-
-
 # Поддерживаемые типы данных #
 
-* bool
-* int
-* long
-* float
-* string
-* bool []
-* int []
-* long []
-* float []
-* string []
+* *bool*
+* *int*
+* *long*
+* *float*
+* *string*
+* *bool []*
+* *int []*
+* *long []*
+* *float []*
+* *string []*
 
 # Автоматический вывод типа строки #
 
@@ -44,8 +41,8 @@
 * bool string int -> **string**. Результирующий тип - string. 
 * int int long -> **long**. Результирующий тип - long. 
 * int float bool long string -> **string**. Результирующий тип - string. 
-**Если в строке находится хотя бы одна ячейка типа string, то вся строка имеет тип string.**
 
+**Если в строке находится хотя бы одна ячейка типа string, то вся строка имеет тип string.**
 
 # Структура таблицы #
 
@@ -56,7 +53,7 @@
 
 * **Generate class files** - загружает все Google таблицы, описанные в **Google sheet data** и генерирует файлы .cs.
 
-* Generate data files - загружает все Google таблицы, описанные в **Google sheet data** и генерирует файлы данных (SO или xml). Если в assembly нет нужного класса, то выводится LogWarning.
+* **Generate data files** - загружает все Google таблицы, описанные в **Google sheet data** и генерирует файлы данных (SO или xml). Если в assembly нет нужного класса, то выводится LogWarning.
 
 ### Окно **Google sheet data** ###
 
