@@ -13,7 +13,7 @@
 ![2.png](https://bitbucket.org/repo/gLan95/images/651845763-2.png)
 
 3. В Unity переходим в **Tools->Google Sheet Integration** и жмём **Create Config** 
-![4.png](https://bitbucket.org/repo/gLan95/images/890118217-4.png)
+![4.png](https://bitbucket.org/repo/gLan95/images/3689851442-4.png)
 
 4. Заполняем все поля аналогичным образом и жмём кнопку сверху **Generate class files**. После того, как загрузился класс и Unity его скомпилировал, нажимаем **Generate data files**. 
 ![5.png](https://bitbucket.org/repo/gLan95/images/198756042-5.png)
