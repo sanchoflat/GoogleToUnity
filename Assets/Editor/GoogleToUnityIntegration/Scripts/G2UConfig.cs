@@ -22,20 +22,20 @@ namespace GoogleSheetIntergation {
         public string ArraySeparator { get; set; }
 
         
-        public ParamClassBuilder ParamClassBuilder = new ParamClassBuilder();
+        public ConstantsClassBuilder ConstantsClassBuilder = new ConstantsClassBuilder();
 
-        public string ParameterClassName {
-            get { return PathManager.ParamClassName; }
-            set { PathManager.ParamClassName = value; }
+        public string ConstantClassName {
+            get { return PathManager.ConstantClassName; }
+            set { PathManager.ConstantClassName = value; }
         }
 
-        public string ParameterClassLocation {
-            get { return PathManager.ParamLocation; }
-            set { PathManager.ParamLocation = value; }
+        public string ConstantClassLocation {
+            get { return PathManager.ConstantClassLocation; }
+            set { PathManager.ConstantClassLocation = value; }
         }
 
         public string ParameterClassFullName {
-            get { return ParameterClassLocation + "/" + ParameterClassName + ".cs"; }
+            get { return ConstantClassLocation + "/" + ConstantClassName + ".cs"; }
         }
 
         public PathManager PathManager { get; private set; }
@@ -52,8 +52,8 @@ namespace GoogleSheetIntergation {
             SkipRowPrefix = config.SkipRowPrefix;
             CommentColumnTitle = config.CommentColumnTitle;
             ArraySeparator = config.ArraySeparator;
-            PathManager.ParamClassName = config.ParameterClassName;
-            PathManager.ParamLocation = config.ParameterClassLocation;
+            PathManager.ConstantClassName = config.ConstantClassName;
+            PathManager.ConstantClassLocation = config.ConstantClassLocation;
             return true;
         }
 
@@ -66,8 +66,8 @@ namespace GoogleSheetIntergation {
                 WasInizialized = false,
                 SkipRowPrefix = "__",
                 CommentColumnTitle = "Comment",
-                ParameterClassName = "Param",
-                ParameterClassLocation = "./Assets/Scripts",
+                ConstantClassName = "Constants",
+                ConstantClassLocation = "./Assets/Scripts",
                 GoogleSheetData = new List<GoogleSheetData> {
                     GoogleSheetIntergation.GoogleSheetData.CreateDefaultData()
                 },

@@ -168,7 +168,7 @@ namespace GoogleSheetIntergation {
                 var path = googleData.GetDataPath(concreteDataName);
                 File.WriteAllText(path,
                     serializedClass);
-                G2UConfig.Instance.ParamClassBuilder.UpdateDataLocation(path);
+                G2UConfig.Instance.ConstantsClassBuilder.UpdateDataLocation(path);
 
                 AssetDatabase.ImportAsset(path.Replace("./", ""), ImportAssetOptions.ForceUpdate);
                 AssetDatabase.Refresh();

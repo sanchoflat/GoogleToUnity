@@ -114,10 +114,10 @@ namespace GoogleSheetIntergation {
             _ex.DrawVertical(() => {
                 data.GoogleDataName = _ex.TextField("Sheet Name", data.GoogleDataName);
                 if(_ex.Foldout("Parameters", data.GoogleDataName + "paramExpander", true)) {
-                    data.GoogleDriveFileGuid = _ex.TextField("GoogleDriveFileGuid", data.GoogleDriveFileGuid);
-                    data.GoogleDriveSheetGuid = _ex.TextField("GoogleDriveSheetGuid", data.GoogleDriveSheetGuid);
+                    data.GoogleSheetFileGuid = _ex.TextField("Google Sheet File Guid", data.GoogleSheetFileGuid);
+                    data.GoogleSheetGuid = _ex.TextField("Google Sheet Guid", data.GoogleSheetGuid);
                     data.DataExtension = _ex.TextField("Data extension", data.DataExtension);
-                    data.DataType = _ex.EnumPopUp("Data type", "Data type" + data.GoogleDriveSheetGuid, data.DataType,
+                    data.DataType = _ex.EnumPopUp("Data type", "Data type" + data.GoogleSheetGuid, data.DataType,
                         textWidth: 145);
                     data.Namespace = _ex.TextField("Namespace", data.Namespace);
                     if(data.DataLocation == null || data.ClassLocation == null) { data.CreateDefaultPath(); }
@@ -145,8 +145,8 @@ namespace GoogleSheetIntergation {
 
         private void AccessModifiers(GoogleSheetData data) {
             if(data.DataType == DataType.ScriptableObject) {
-                _ex.SetEnumPopUpValue("VariableType" + data.GoogleDriveSheetGuid, VariableType.Field);
-                _ex.SetEnumPopUpValue("Fieldaccessmodifier" + data.GoogleDriveSheetGuid,
+                _ex.SetEnumPopUpValue("VariableType" + data.GoogleSheetGuid, VariableType.Field);
+                _ex.SetEnumPopUpValue("Fieldaccessmodifier" + data.GoogleSheetGuid,
                     GoogleSheetIntergation.AccessModifiers.Public);
                 data.DataExtension = ".asset";
                 GUI.enabled = false;
@@ -156,13 +156,13 @@ namespace GoogleSheetIntergation {
                     data.DataExtension = ".xml";
                 }
             }
-            data.VariableType = _ex.EnumPopUp("Variable Type", "VariableType" + data.GoogleDriveSheetGuid,
+            data.VariableType = _ex.EnumPopUp("Variable Type", "VariableType" + data.GoogleSheetGuid,
                 data.VariableType, textWidth: 145);
             data.FieldAccessModifiers = _ex.EnumPopUp("Field access modifier",
-                "Fieldaccessmodifier" + data.GoogleDriveSheetGuid, data.FieldAccessModifiers, textWidth: 145);
+                "Fieldaccessmodifier" + data.GoogleSheetGuid, data.FieldAccessModifiers, textWidth: 145);
             if(data.VariableType == VariableType.Property) {
                 data.SetAccessModifiers = _ex.EnumPopUp("Set access modifier",
-                    "Set access modifier" + data.GoogleDriveSheetGuid, data.SetAccessModifiers, textWidth: 145);
+                    "Set access modifier" + data.GoogleSheetGuid, data.SetAccessModifiers, textWidth: 145);
             }
             GUI.enabled = true;
         }
@@ -176,13 +176,13 @@ namespace GoogleSheetIntergation {
             GoogleSheetDataMenu();
             if(_ex.Foldout("Settings", "settingsKey", true)) {
                 G2UConfig.Instance.SkipRowPrefix = _ex.TextField("Skip prefix", G2UConfig.Instance.SkipRowPrefix);
-                G2UConfig.Instance.ParameterClassName = _ex.TextField("Parameter class name",
-                    G2UConfig.Instance.ParameterClassName);
-                G2UConfig.Instance.ParameterClassLocation = _ex.TextField("Parameter class location",
-                    G2UConfig.Instance.ParameterClassLocation);
-                var parLoc = G2UConfig.Instance.ParameterClassLocation;
+                G2UConfig.Instance.ConstantClassName = _ex.TextField("Constant class name",
+                    G2UConfig.Instance.ConstantClassName);
+                G2UConfig.Instance.ConstantClassLocation = _ex.TextField("Constant class location",
+                    G2UConfig.Instance.ConstantClassLocation);
+                var parLoc = G2UConfig.Instance.ConstantClassLocation;
                 if(parLoc.EndsWith("/")) {
-                    G2UConfig.Instance.ParameterClassLocation = parLoc.Substring(0, parLoc.Length - 1);
+                    G2UConfig.Instance.ConstantClassLocation = parLoc.Substring(0, parLoc.Length - 1);
                 }
                 G2UConfig.Instance.CommentColumnTitle = _ex.TextField("Comment column title",
                     G2UConfig.Instance.CommentColumnTitle);
@@ -198,11 +198,9 @@ namespace GoogleSheetIntergation {
 
         private void GenerateData() {
             _ex.DrawVertical(() => {
-                _ex.Button("Generate class file", GenerateClassFile);
-                _ex.Button("Generate data file", GenerateDataFile);
-                _ex.Button("Generate Parameter Class", G2UConfig.Instance.ParamClassBuilder.GenerateParameterClass);
-
-
+                _ex.Button("Generate class files", GenerateClassFile);
+                _ex.Button("Generate data files", GenerateDataFile);
+//                _ex.Button("Generate class with constants", G2UConfig.Instance.ConstantsClassBuilder.GenerateConstantClass);
             });
         }
 
@@ -247,10 +245,6 @@ namespace GoogleSheetIntergation {
                 }
             });
         }
-
-        #endregion
-
-        #region Generate parameter class
 
         #endregion
 

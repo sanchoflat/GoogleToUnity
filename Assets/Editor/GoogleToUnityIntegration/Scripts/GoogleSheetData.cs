@@ -22,7 +22,7 @@ namespace GoogleSheetIntergation {
         private const string GoogleDriveFormat =
             "http://docs.google.com/feeds/download/spreadsheets/Export?key={0}&exportFormat=csv&gid={1}";
 
-        public GoogleSheetData(string googleDataName, string googleDriveFileGuid, string googleDriveSheetGuid,
+        public GoogleSheetData(string googleDataName, string googleSheetFileGuid, string googleSheetGuid,
             string dataExtension, string ns, DataType dataType, VariableType variableType,
             AccessModifiers setAccessModifiers, AccessModifiers fieldAccessModifiers) {
             VariableType = variableType;
@@ -31,18 +31,18 @@ namespace GoogleSheetIntergation {
             DataExtension = dataExtension;
             Namespace = ns;
             GoogleDataName = googleDataName;
-            GoogleDriveFileGuid = googleDriveFileGuid;
-            GoogleDriveSheetGuid = googleDriveSheetGuid;
+            GoogleSheetFileGuid = googleSheetFileGuid;
+            GoogleSheetGuid = googleSheetGuid;
         }
 
         public GoogleSheetData() {
-            GoogleDriveSheetGuid = "";
-            GoogleDriveFileGuid = "";
+            GoogleSheetGuid = "";
+            GoogleSheetFileGuid = "";
         }
 
         public string GoogleDataName { get; set; }
-        public string GoogleDriveFileGuid { get; set; }
-        public string GoogleDriveSheetGuid { get; set; }
+        public string GoogleSheetFileGuid { get; set; }
+        public string GoogleSheetGuid { get; set; }
 
         public string DataExtension { get; set; }
         public string Namespace { get; set; }
@@ -77,8 +77,8 @@ namespace GoogleSheetIntergation {
         }
 
         public string GetURL() {
-            if(string.IsNullOrEmpty(GoogleDriveFileGuid) || string.IsNullOrEmpty(GoogleDriveSheetGuid)) { return null; }
-            return string.Format(GoogleDriveFormat, GoogleDriveFileGuid, GoogleDriveSheetGuid);
+            if(string.IsNullOrEmpty(GoogleSheetFileGuid) || string.IsNullOrEmpty(GoogleSheetGuid)) { return null; }
+            return string.Format(GoogleDriveFormat, GoogleSheetFileGuid, GoogleSheetGuid);
         }
 
         public static GoogleSheetData CreateDefaultData() {
@@ -94,9 +94,9 @@ namespace GoogleSheetIntergation {
                 SetAccessModifiers = SetAccessModifiers,
                 FieldAccessModifiers = FieldAccessModifiers,
                 DataExtension = DataExtension,
-                GoogleDriveSheetGuid = "",
+                GoogleSheetGuid = "",
                 GoogleDataName = "",
-                GoogleDriveFileGuid = GoogleDriveFileGuid,
+                GoogleSheetFileGuid = GoogleSheetFileGuid,
                 DataLocation = "./Assets/Resources/Configs",
                 ClassLocation = "./Assets/Scripts/Configs"
             };

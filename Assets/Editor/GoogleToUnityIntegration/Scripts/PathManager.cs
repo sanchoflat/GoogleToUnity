@@ -5,32 +5,32 @@ using System.Text;
 namespace GoogleSheetIntergation {
     public class PathManager {
         public static FileInfo ConfigFileInfo;
-        private const string _paramFolderDefault = "./Assets/Scripts/Game";
+        private const string _constantFolderDefault = "./Assets/Scripts/Game";
 
-        public string ParamLocation { get; set; }
-        public string ParamClassName { get; set; }
+        public string ConstantClassLocation { get; set; }
+        public string ConstantClassName { get; set; }
 
         static PathManager() {
             ConfigFileInfo = new FileInfo("./Assets/Editor/GoogleToUnityIntegration/Config/g2uconfig.txt");
         }
 
         public PathManager() {
-            ParamLocation = _paramFolderDefault;
+            ConstantClassLocation = _constantFolderDefault;
         }
 
 
-        public DirectoryInfo GetParamFolder() {
-            return new DirectoryInfo(ParamLocation);
+        public DirectoryInfo GetConstantClassFolder() {
+            return new DirectoryInfo(ConstantClassLocation);
         }
 
         public string GetParamPath()
         {
-            return GetParamPath(ParamClassName);
+            return GetParamPath(ConstantClassName);
         }
 
         public string GetParamPath(string fileName)
         {
-            return string.Format("{0}/{1}.cs", ParamLocation, fileName);
+            return string.Format("{0}/{1}.cs", ConstantClassLocation, fileName);
         }
 
         public void CreateAllFolders() {
@@ -42,8 +42,8 @@ namespace GoogleSheetIntergation {
         }
 
       
-        public void CreateParameterFolder() {
-            var d = GetParamFolder();
+        public void CreateConstantClassFolder() {
+            var d = GetConstantClassFolder();
             CreateFolder(d);
         }
 
@@ -67,9 +67,9 @@ namespace GoogleSheetIntergation {
         }
 
         public FileInfo GetParametersFileInfo(G2UConfig config = null, string name = "") {
-            var directory = _paramFolderDefault;
+            var directory = _constantFolderDefault;
             if(config != null) {
-                directory = config.ParameterClassLocation;
+                directory = config.ConstantClassLocation;
             }
             return new FileInfo(directory + "/" + name + ".cs");
         }
