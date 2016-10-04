@@ -1,9 +1,7 @@
 ﻿#if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using Assets.GoogleToUnityIntegration.Scripts;
 using EternalMaze.EditorWindows;
 using UnityEditor;
@@ -176,14 +174,14 @@ namespace GoogleSheetIntergation {
             GoogleSheetDataMenu();
             if(_ex.Foldout("Settings", "settingsKey", true)) {
                 G2UConfig.Instance.SkipRowPrefix = _ex.TextField("Skip prefix", G2UConfig.Instance.SkipRowPrefix);
-                G2UConfig.Instance.ConstantClassName = _ex.TextField("Constant class name",
-                    G2UConfig.Instance.ConstantClassName);
-                G2UConfig.Instance.ConstantClassLocation = _ex.TextField("Constant class location",
-                    G2UConfig.Instance.ConstantClassLocation);
-                var parLoc = G2UConfig.Instance.ConstantClassLocation;
-                if(parLoc.EndsWith("/")) {
-                    G2UConfig.Instance.ConstantClassLocation = parLoc.Substring(0, parLoc.Length - 1);
-                }
+//                G2UConfig.Instance.ConstantClassName = _ex.TextField("Constant class name",
+//                    G2UConfig.Instance.ConstantClassName);
+//                G2UConfig.Instance.ConstantClassLocation = _ex.TextField("Constant class location",
+//                    G2UConfig.Instance.ConstantClassLocation);
+//                var parLoc = G2UConfig.Instance.ConstantClassLocation;
+//                if(parLoc.EndsWith("/")) {
+//                    G2UConfig.Instance.ConstantClassLocation = parLoc.Substring(0, parLoc.Length - 1);
+//                }
                 G2UConfig.Instance.CommentColumnTitle = _ex.TextField("Comment column title",
                     G2UConfig.Instance.CommentColumnTitle);
                 G2UConfig.Instance.ArraySeparator = _ex.TextField("Array separator", G2UConfig.Instance.ArraySeparator);
@@ -285,36 +283,3 @@ namespace GoogleSheetIntergation {
 
 
 #endif
-
-//  public static Assembly Compile(string source) {
-//            var provider = new CSharpCodeProvider();
-//            var param = new CompilerParameters();
-//
-//            // Add ALL of the assembly references
-//            foreach(var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-//                param.ReferencedAssemblies.Add(assembly.Location);
-//            }
-//
-//            // Add specific assembly references
-//            //param.ReferencedAssemblies.Add("System.dll");
-//            //param.ReferencedAssemblies.Add("CSharp.dll");
-//            //param.ReferencedAssemblies.Add("UnityEngines.dll");
-//
-//            // Generate a dll in memory
-//            param.GenerateExecutable = false;
-//            param.GenerateInMemory = true;
-//
-//            // Compile the source
-//            var result = provider.CompileAssemblyFromSource(param, source);
-//            if(result.Errors.Count > 0) {
-//                var msg = new StringBuilder();
-//                foreach(CompilerError error in result.Errors) {
-//                    msg.AppendFormat("Error ({0}): {1}\n",
-//                        error.ErrorNumber, error.ErrorText);
-//                }
-//                throw new Exception(msg.ToString());
-//            }
-//
-//            // Return the assembly
-//            return result.CompiledAssembly;
-//        }
