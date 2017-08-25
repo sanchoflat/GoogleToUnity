@@ -188,8 +188,9 @@ namespace GoogleSheetIntergation {
             GoogleSheetDataMenu();
             if(_ex.Foldout("Settings", "settingsKey", true)) {
                 G2UConfig.Instance.SkipRowPrefix = _ex.TextField("Skip prefix", G2UConfig.Instance.SkipRowPrefix);
-                G2UConfig.Instance.TypeColumnName = _ex.TextField("Type column name", G2UConfig.Instance.TypeColumnName);
                 G2UConfig.Instance.UseTypeColumn = _ex.Toggle("Use type column", G2UConfig.Instance.UseTypeColumn);
+                if(G2UConfig.Instance.UseTypeColumn)
+                    G2UConfig.Instance.TypeColumnName = _ex.TextField("Type column name", G2UConfig.Instance.TypeColumnName);
                 G2UConfig.Instance.CommentColumnTitle = _ex.TextField("Comment column title",
                     G2UConfig.Instance.CommentColumnTitle);
                 G2UConfig.Instance.ArraySeparator = _ex.TextField("Array separator", G2UConfig.Instance.ArraySeparator);
