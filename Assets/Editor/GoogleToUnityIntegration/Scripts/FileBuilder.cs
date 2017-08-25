@@ -308,21 +308,37 @@ namespace GoogleSheetIntergation {
         private StringBuilder GenerateLoadingMethods(List<AbstractDataRow> data) {
             var sb = new StringBuilder();
             if(!_googleData.GenerateGetMethod) return sb;
-            sb.AppendLine(GenerateLoadingClass("GetStringByName",
-                row => !row.IsArray && row.ParameterType == typeof(string) && !row.SkipDataRow(), typeof(string), data));
-            sb.AppendLine(GenerateLoadingClass("GetIntByName",
-                row => !row.IsArray && row.ParameterType == typeof(int) && !row.SkipDataRow(), typeof(int), data));
-            sb.AppendLine(GenerateLoadingClass("GetFloatByName",
-                row => !row.IsArray && row.ParameterType == typeof(float) && !row.SkipDataRow(), typeof(float), data));
-            sb.AppendLine(GenerateLoadingClass("GetLongByName",
-                row => !row.IsArray && row.ParameterType == typeof(long) && !row.SkipDataRow(), typeof(long), data));
-            return sb;
-        }
 
-        protected virtual StringBuilder GetFileEnd() {
-            var sb = new StringBuilder();
-            sb.AppendLine(string.Format("{0}}}", FileBuilder.GetTabulator(1)));
-            sb.AppendLine("}");
+            sb.AppendLine(GenerateLoadingClass("GetString",
+                row => !row.IsArray && row.ParameterType == typeof(string) && !row.SkipDataRow(), typeof(string), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetStringArray",
+                row => row.IsArray && row.ParameterType == typeof(string) && !row.SkipDataRow(), typeof(string[]), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetInt",
+                row => !row.IsArray && row.ParameterType == typeof(int) && !row.SkipDataRow(), typeof(int), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetIntArray",
+                row => row.IsArray && row.ParameterType == typeof(int) && !row.SkipDataRow(), typeof(int[]), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetFloat",
+                row => !row.IsArray && row.ParameterType == typeof(float) && !row.SkipDataRow(), typeof(float), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetFloatArray",
+                row => row.IsArray && row.ParameterType == typeof(float) && !row.SkipDataRow(), typeof(float[]), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetLong",
+                row => !row.IsArray && row.ParameterType == typeof(long) && !row.SkipDataRow(), typeof(long), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetLongArray",
+                row => row.IsArray && row.ParameterType == typeof(long) && !row.SkipDataRow(), typeof(long[]), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetBool",
+                row => !row.IsArray && row.ParameterType == typeof(bool) && !row.SkipDataRow(), typeof(bool), data));
+
+            sb.AppendLine(GenerateLoadingClass("GetBoolArray",
+                row => row.IsArray && row.ParameterType == typeof(bool) && !row.SkipDataRow(), typeof(bool[]), data));
+
             return sb;
         }
 
@@ -364,9 +380,21 @@ namespace GoogleSheetIntergation {
             return sb.ToString();
         }
 
+        protected virtual StringBuilder GetFileEnd() {
+            var sb = new StringBuilder();
+            sb.AppendLine(string.Format("{0}}}", FileBuilder.GetTabulator(1)));
+            sb.AppendLine("}");
+            return sb;
+        }
+
         public static string GetDefault(Type type) {
+            if(type == typeof(bool))
+                return "false";
             if(type.IsValueType) {
                 return Activator.CreateInstance(type).ToString();
+            }
+            if(type == typeof(string[]) || type == typeof(int[]) || type == typeof(float[]) || type == typeof(long[])) {
+                return "null";
             }
             return "string.Empty";
         }
