@@ -18,6 +18,14 @@ namespace GoogleSheetIntergation {
         ScriptableObject
     }
 
+    /// <summary>
+    /// Если GenerateGetMethod == true, то создается метод с входным параметров ClassDataType и по нему возвращается значение 
+    /// </summary>
+    public enum ClassDataType
+    {
+        String, Enum
+    }
+
     public class GoogleSheetData {
         private const string GoogleDriveFormat =
             "http://docs.google.com/feeds/download/spreadsheets/Export?key={0}&exportFormat=csv&gid={1}";
@@ -39,6 +47,11 @@ namespace GoogleSheetIntergation {
             GoogleSheetGuid = "";
             GoogleSheetFileGuid = "";
         }
+
+        
+        public bool GenerateGetMethod { get; set; }
+        public ClassDataType GetMethodType { get; set; }
+
 
         public string GoogleDataName { get; set; }
         public string GoogleSheetFileGuid { get; set; }
@@ -98,7 +111,9 @@ namespace GoogleSheetIntergation {
                 GoogleDataName = "",
                 GoogleSheetFileGuid = GoogleSheetFileGuid,
                 DataLocation = "./Assets/Resources/Configs",
-                ClassLocation = "./Assets/Scripts/Configs"
+                ClassLocation = "./Assets/Scripts/Configs",
+                GenerateGetMethod = false,
+                GetMethodType = ClassDataType.Enum
             };
             return newData;
         }

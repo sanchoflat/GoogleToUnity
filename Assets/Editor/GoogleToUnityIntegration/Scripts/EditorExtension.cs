@@ -51,6 +51,27 @@ namespace EternalMaze.EditorWindows {
             return value;
         }
 
+
+
+        public bool Toggle(string label, bool value, Color color = default(Color))
+        {
+            color = PrepareDefaultColor(color);
+            GUI.color = color;
+            value = EditorGUILayout.Toggle(new GUIContent(label), value);
+            GUI.color = Color.white;
+            return value;
+        }
+
+        public bool Toggle(string label, string tooltip, bool value, Color color = default(Color))
+        {
+            color = PrepareDefaultColor(color);
+            GUI.color = color;
+            value = EditorGUILayout.Toggle(new GUIContent(label, tooltip), value);
+            GUI.color = Color.white;
+            return value;
+        }
+
+
         /// <summary>
         ///     Int Slider
         /// </summary>

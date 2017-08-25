@@ -114,15 +114,27 @@ namespace GoogleSheetIntergation {
                 if(_ex.Foldout("Parameters", data.GoogleDataName + "paramExpander", true)) {
                     data.GoogleSheetFileGuid = _ex.TextField("Google Sheet File Guid", data.GoogleSheetFileGuid);
                     data.GoogleSheetGuid = _ex.TextField("Google Sheet Guid", data.GoogleSheetGuid);
+
+                    _ex.Space();
                     data.DataExtension = _ex.TextField("Data extension", data.DataExtension);
                     data.DataType = _ex.EnumPopUp("Data type", "Data type" + data.GoogleSheetGuid, data.DataType,
                         textWidth: 145);
                     data.Namespace = _ex.TextField("Namespace", data.Namespace);
                     if(data.DataLocation == null || data.ClassLocation == null) { data.CreateDefaultPath(); }
+
+                    _ex.Space();
                     data.ClassLocation = _ex.TextField("Class location", data.ClassLocation);
                     data.DataLocation = _ex.TextField("Data location", data.DataLocation);
+                    _ex.Space();
+
                     CheckForLocationEnding(data);
                     AccessModifiers(data);
+
+                    _ex.Space();
+                    data.GenerateGetMethod = _ex.Toggle("Generate GET method", data.GenerateGetMethod);
+                    if(data.GenerateGetMethod) {
+                        data.GetMethodType = _ex.EnumPopUp("Get method type", data.GetMethodType);
+                    }
                 }
                 _ex.Button("Generate class file", () => { GenerateClassFile(data); });
                 _ex.Button(string.Format("Generate {0} file", data.DataType), () => { GenerateDataFile(data);});
@@ -174,14 +186,8 @@ namespace GoogleSheetIntergation {
             GoogleSheetDataMenu();
             if(_ex.Foldout("Settings", "settingsKey", true)) {
                 G2UConfig.Instance.SkipRowPrefix = _ex.TextField("Skip prefix", G2UConfig.Instance.SkipRowPrefix);
-//                G2UConfig.Instance.ConstantClassName = _ex.TextField("Constant class name",
-//                    G2UConfig.Instance.ConstantClassName);
-//                G2UConfig.Instance.ConstantClassLocation = _ex.TextField("Constant class location",
-//                    G2UConfig.Instance.ConstantClassLocation);
-//                var parLoc = G2UConfig.Instance.ConstantClassLocation;
-//                if(parLoc.EndsWith("/")) {
-//                    G2UConfig.Instance.ConstantClassLocation = parLoc.Substring(0, parLoc.Length - 1);
-//                }
+                G2UConfig.Instance.TypeColumnName = _ex.TextField("Type column name", G2UConfig.Instance.TypeColumnName);
+                G2UConfig.Instance.UseTypeColumn = _ex.Toggle("Use type column", G2UConfig.Instance.UseTypeColumn);
                 G2UConfig.Instance.CommentColumnTitle = _ex.TextField("Comment column title",
                     G2UConfig.Instance.CommentColumnTitle);
                 G2UConfig.Instance.ArraySeparator = _ex.TextField("Array separator", G2UConfig.Instance.ArraySeparator);

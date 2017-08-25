@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 
 namespace GoogleSheetIntergation {
     public class G2UConfig {
+
         public static G2UConfig Instance {
             get {
                 if(_instance == null) { _instance = CreateDefault(); }
@@ -20,8 +21,9 @@ namespace GoogleSheetIntergation {
         public string SkipRowPrefix { get; set; }
         public string CommentColumnTitle { get; set; }
         public string ArraySeparator { get; set; }
-
-        
+        public string TypeColumnName { get; set; }
+        public bool UseTypeColumn { get; set; }
+       
         public ConstantsClassBuilder ConstantsClassBuilder = new ConstantsClassBuilder();
 
         public string ConstantClassName {
@@ -54,6 +56,8 @@ namespace GoogleSheetIntergation {
             ArraySeparator = config.ArraySeparator;
             PathManager.ConstantClassName = config.ConstantClassName;
             PathManager.ConstantClassLocation = config.ConstantClassLocation;
+            TypeColumnName = config.TypeColumnName;
+            UseTypeColumn = config.UseTypeColumn;
             return true;
         }
 
@@ -68,6 +72,7 @@ namespace GoogleSheetIntergation {
                 CommentColumnTitle = "Comment",
                 ConstantClassName = "Constants",
                 ConstantClassLocation = "./Assets/Scripts",
+                TypeColumnName = "Type",
                 GoogleSheetData = new List<GoogleSheetData> {
                     GoogleSheetIntergation.GoogleSheetData.CreateDefaultData()
                 },
