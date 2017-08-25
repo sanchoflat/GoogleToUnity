@@ -51,6 +51,7 @@ namespace GoogleSheetIntergation {
         
         public bool GenerateGetMethod { get; set; }
         public ClassDataType GetMethodType { get; set; }
+        public string EnumName{ get; set; }
 
 
         public string GoogleDataName { get; set; }
@@ -113,6 +114,7 @@ namespace GoogleSheetIntergation {
                 DataLocation = "./Assets/Resources/Configs",
                 ClassLocation = "./Assets/Scripts/Configs",
                 GenerateGetMethod = false,
+                EnumName = "LocalizationType",
                 GetMethodType = ClassDataType.Enum
             };
             return newData;

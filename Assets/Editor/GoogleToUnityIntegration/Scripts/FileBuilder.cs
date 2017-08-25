@@ -53,7 +53,6 @@ namespace GoogleSheetIntergation {
 
         public static bool GenerateData(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data,
             GoogleSheetData googleSheetData) {
-
             bool output = false;
             switch(googleSheetData.DataType) {
                 case DataType.ScriptableObject:
@@ -262,8 +261,10 @@ namespace GoogleSheetIntergation {
 
         public string GenerateClass(List<AbstractDataRow> data, string className) {
             _className = PathManager.PrepareFileName(className, true);
+            data = data.Where(row => !string.IsNullOrEmpty(row.ParameterName)).ToList();
             var sb = new StringBuilder();
             sb.Append(GetFileStart());
+            sb.Append(GetEnumDeclaration(data));
             sb.Append(GetFileData(data));
             sb.Append(GenerateLoadingMethods(data));
             sb.Append(GetFileEnd());
@@ -289,15 +290,24 @@ namespace GoogleSheetIntergation {
             return sb;
         }
 
-        protected virtual StringBuilder GetFileEnd() {
-            var sb = new StringBuilder();
-            sb.AppendLine(string.Format("{0}}}", FileBuilder.GetTabulator(1)));
-            sb.AppendLine("}");
+        protected virtual StringBuilder GetEnumDeclaration(List<AbstractDataRow> data) {
+            StringBuilder sb = new StringBuilder();
+
+            if (!(_googleData.GenerateGetMethod && _googleData.GetMethodType == ClassDataType.Enum)) {
+                return sb;
+            }
+            sb.AppendLine(FileBuilder.GetTabulator(2) + "public enum " + _googleData.EnumName + " {");
+            for(int i = 0; i < data.Count; i++) {
+                sb.AppendLine(FileBuilder.GetTabulator(3) + data[i].ParameterName + ",");
+            }
+            sb.AppendLine(FileBuilder.GetTabulator(2) + "}");
             return sb;
+
         }
 
-        private string GenerateLoadingMethods(List<AbstractDataRow> data) {
+        private StringBuilder GenerateLoadingMethods(List<AbstractDataRow> data) {
             var sb = new StringBuilder();
+            if(!_googleData.GenerateGetMethod) return sb;
             sb.AppendLine(GenerateLoadingClass("GetStringByName",
                 row => !row.IsArray && row.ParameterType == typeof(string) && !row.SkipDataRow(), typeof(string), data));
             sb.AppendLine(GenerateLoadingClass("GetIntByName",
@@ -306,7 +316,14 @@ namespace GoogleSheetIntergation {
                 row => !row.IsArray && row.ParameterType == typeof(float) && !row.SkipDataRow(), typeof(float), data));
             sb.AppendLine(GenerateLoadingClass("GetLongByName",
                 row => !row.IsArray && row.ParameterType == typeof(long) && !row.SkipDataRow(), typeof(long), data));
-            return sb.ToString();
+            return sb;
+        }
+
+        protected virtual StringBuilder GetFileEnd() {
+            var sb = new StringBuilder();
+            sb.AppendLine(string.Format("{0}}}", FileBuilder.GetTabulator(1)));
+            sb.AppendLine("}");
+            return sb;
         }
 
         private string GenerateLoadingClass(string methodName, Func<AbstractDataRow, bool> isValid, Type returnType,
@@ -314,15 +331,29 @@ namespace GoogleSheetIntergation {
             if(!data.Any(isValid)) { return ""; }
             var sb = new StringBuilder();
             sb.Append("\r\n");
-            sb.AppendLine(string.Format("{0}public {1} {2}(string key) {{",
-                FileBuilder.GetTabulator(2), returnType, methodName));
-            sb.AppendLine(FileBuilder.GetTabulator(3) + "key = key.ToLower();");
-            sb.AppendLine(FileBuilder.GetTabulator(3) + "switch(key){");
-            for(var i = 0; i < data.Count; i++) {
-                if(!isValid(data[i])) { continue; }
-                sb.AppendLine(string.Format("{0}case \"{1}\":", FileBuilder.GetTabulator(4),
-                    data[i].ParameterName.ToLower()));
-                sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName));
+
+            sb.AppendLine(string.Format("{0}public {1} {2}({3} key) {{",
+                FileBuilder.GetTabulator(2), returnType, methodName, _googleData.GetMethodType == ClassDataType.String ? "string" : _googleData.EnumName));
+
+            if(_googleData.GetMethodType == ClassDataType.String) {
+                sb.AppendLine(FileBuilder.GetTabulator(3) + "key = key.ToLower();");
+                sb.AppendLine(FileBuilder.GetTabulator(3) + "switch(key){");
+                for(var i = 0; i < data.Count; i++) {
+                    if(!isValid(data[i])) { continue; }
+                    sb.AppendLine(string.Format("{0}case \"{1}\":", FileBuilder.GetTabulator(4),
+                        data[i].ParameterName.ToLower()));
+                    sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName));
+                }
+            }
+            else {
+                sb.AppendLine(FileBuilder.GetTabulator(3) + "switch(key){");
+                for (var i = 0; i < data.Count; i++)
+                {
+                    if (!isValid(data[i])) { continue; }
+                    sb.AppendLine(string.Format("{0}case {1}:", FileBuilder.GetTabulator(4),
+                        _googleData.EnumName + "." + data[i].ParameterName));
+                    sb.AppendLine(string.Format("{0}return {1};", FileBuilder.GetTabulator(5), data[i].ParameterName));
+                }
             }
             sb.AppendLine(FileBuilder.GetTabulator(4) + "default:");
             sb.AppendLine(string.Format("{0}Debug.LogWarning(\"Can't find key <b>\" + {1} + \"</b>\");",

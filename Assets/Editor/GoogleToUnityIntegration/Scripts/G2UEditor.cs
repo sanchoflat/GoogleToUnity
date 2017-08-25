@@ -134,6 +134,8 @@ namespace GoogleSheetIntergation {
                     data.GenerateGetMethod = _ex.Toggle("Generate GET method", data.GenerateGetMethod);
                     if(data.GenerateGetMethod) {
                         data.GetMethodType = _ex.EnumPopUp("Get method type", data.GetMethodType);
+                        if(data.GetMethodType == ClassDataType.Enum)
+                            data.EnumName = _ex.TextField("Enum type name", data.EnumName);
                     }
                 }
                 _ex.Button("Generate class file", () => { GenerateClassFile(data); });
