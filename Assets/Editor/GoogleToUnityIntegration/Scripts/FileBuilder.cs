@@ -90,6 +90,7 @@ namespace GoogleSheetIntergation {
                         path = AssetDatabase.GetAssetPath(so);
                         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
                         AssetDatabase.Refresh();
+                        EditorUtility.SetDirty(so);
                         Debug.Log(string.Format("SO asset <b>{0}</b> was successful generated", val.Key));
                     }
                 }
