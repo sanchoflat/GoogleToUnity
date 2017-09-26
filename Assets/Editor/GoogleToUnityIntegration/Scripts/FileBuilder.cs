@@ -77,24 +77,29 @@ namespace GoogleSheetIntergation {
                 }
                 if (t.BaseType != typeof(ScriptableObject)) { return false; }
                 var keys = data.Keys.ToArray();
-                var values = data.Values.ToArray();
-                googleSheetData.CreateDataFolder();
-                for (var i = 0; i < keys.Length; i++) {
-                    foreach (var val in values[i]) {
-                        var so = ScriptableObject.CreateInstance(soName);
-                        var path = string.Format("{0}/{1}.asset", googleSheetData.DataLocation.Replace("./", ""),
-                            val.Key);
-                        AssetDatabase.CreateAsset(so,path);
-                        InitFields(so, val.Value);
+            var values = data.Values.ToArray();
+            googleSheetData.CreateDataFolder();
+            for (var i = 0; i < keys.Length; i++)
+            {
+                foreach (var val in values[i])
+                {
+                    if (string.IsNullOrEmpty(val.Key))
+                        continue;
+                    var so = ScriptableObject.CreateInstance(soName);
+                    var path = string.Format("{0}/{1}.asset", googleSheetData.DataLocation.Replace("./", ""),
+                        val.Key);
 
-                        path = AssetDatabase.GetAssetPath(so);
-                        AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
-                        AssetDatabase.Refresh();
-                        EditorUtility.SetDirty(so);
-                        Debug.Log(string.Format("SO asset <b>{0}</b> was successful generated", val.Key));
-                    }
+                    AssetDatabase.CreateAsset(so, path);
+                    InitFields(so, val.Value);
+
+                    path = AssetDatabase.GetAssetPath(so);
+                    AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                    AssetDatabase.Refresh();
+                    EditorUtility.SetDirty(so);
+                    Debug.Log(string.Format("SO asset <b>{0}</b> was successful generated", val.Key));
                 }
-                return true;
+            }
+            return true;
         }
 
         private static bool GenerateTextPrefab(Dictionary<string, Dictionary<string, List<AbstractDataRow>>> data,
